@@ -31,12 +31,13 @@ public class Flocking_Agent : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.velocity = Random.insideUnitCircle * maxSpeed;
+        rb.velocity = Random.insideUnitCircle * maxSpeed * 2;
 
         cam = Camera.main;
         sr = GetComponent<SpriteRenderer>();
 
         spawner = GameObject.Find("Game_Manager").GetComponent<Spawn_Agents>();
+        sr.color = colourGrad.Evaluate(0);
     }
 
     void Update()
@@ -45,7 +46,7 @@ public class Flocking_Agent : MonoBehaviour
         highestNumberOfAgents = localAgents.Count;
 
         colEvaluation = (float)localAgents.Count / highestNumberOfAgents;
-        sr.color = colourGrad.Evaluate(colEvaluation);
+        sr.color = Color.Lerp(sr.color, colourGrad.Evaluate(colEvaluation), Time.deltaTime);
 
         Vector2 forceToAdd = new Vector2();
 
@@ -61,7 +62,7 @@ public class Flocking_Agent : MonoBehaviour
             forceToAdd += Seperation(localAgents);
         }
 
-        rb.AddForce(forceToAdd, ForceMode2D.Force);
+        rb.AddForce(forceToAdd, ForceMode2D.Impulse);
 
         Wrap();
     }
@@ -95,10 +96,10 @@ public class Flocking_Agent : MonoBehaviour
 
             fastAverage -= rb.velocity;
 
-            if (fastAverage.magnitude > maxForce *2 )
+            if (fastAverage.magnitude > maxForce * 2)
             {
                 fastAverage.Normalize();
-                fastAverage *= maxForce *2;
+                fastAverage *= maxForce * 2;
             }
         }
         
@@ -144,7 +145,7 @@ public class Flocking_Agent : MonoBehaviour
             Vector2 difference = transform.position - obj.transform.position;
 
 
-            difference /= distance * distance;
+            difference /= distance;
             
 
             averagePosition += difference;
@@ -160,12 +161,12 @@ public class Flocking_Agent : MonoBehaviour
             fasterAverage = averagePosition - rb.velocity;
         }
 
-        if (colEvaluation > 0.5)
+        if (colEvaluation > 0.6)
         {
-            if (fasterAverage.magnitude > maxForce *2)
+            if (fasterAverage.magnitude > maxForce)
             {
                 fasterAverage.Normalize();
-                fasterAverage *= maxForce *2;
+                fasterAverage *= maxForce * 2;
             }
         }
         else {
