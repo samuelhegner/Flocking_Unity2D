@@ -10,6 +10,7 @@ public class Flocking_Agent : MonoBehaviour
     Rigidbody2D rb;
 
     public float maxSpeed;
+    public float maxForce;
 
     void Start()
     {
@@ -19,7 +20,7 @@ public class Flocking_Agent : MonoBehaviour
 
     void Update()
     {
-        rb.AddForce(Align(localAgents));
+        rb.AddForce(Alignment(localAgents) + Cohesion(localAgents));
 
         Wrap();
     }
@@ -36,7 +37,7 @@ public class Flocking_Agent : MonoBehaviour
         localAgents.Remove(other.gameObject);
     }
 
-    Vector2 Align(List<GameObject> agents) {
+    Vector2 Alignment(List<GameObject> agents) {
         Vector2 averageVelocity = new Vector2();
         Vector2 fastAverage = new Vector2();
 
@@ -50,9 +51,43 @@ public class Flocking_Agent : MonoBehaviour
             fastAverage = averageVelocity * maxSpeed;
 
             fastAverage -= rb.velocity;
+
+            if (fastAverage.magnitude > maxForce)
+            {
+                fastAverage.Normalize();
+                fastAverage *= maxForce;
+            }
         }
         
         return fastAverage;
+    }
+
+    Vector2 Cohesion(List<GameObject> agents) {
+        Vector2 averagePosition = new Vector2();
+        Vector2 fasterAverage = new Vector2();
+
+        foreach (GameObject obj in agents)
+        {
+            averagePosition += new Vector2(obj.transform.position.x, obj.transform.position.y);
+        }
+
+        if (agents.Count > 0)
+        {
+            averagePosition /= agents.Count;
+
+            averagePosition -= new Vector2(transform.position.x, transform.position.y);
+            averagePosition.Normalize();
+            fasterAverage = averagePosition * maxSpeed;
+            fasterAverage -= rb.velocity;
+
+            if (fasterAverage.magnitude > maxForce) {
+                fasterAverage.Normalize();
+                fasterAverage *= maxForce;
+            }
+        }
+
+        return fasterAverage;
+
     }
 
     void Wrap() {
