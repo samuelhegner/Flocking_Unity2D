@@ -20,7 +20,7 @@ public class Flocking_Agent : MonoBehaviour
 
     void Update()
     {
-        rb.AddForce(Alignment(localAgents) + Cohesion(localAgents));
+        rb.AddForce(Seperation(localAgents));
 
         Wrap();
     }
@@ -87,6 +87,31 @@ public class Flocking_Agent : MonoBehaviour
         }
 
         return fasterAverage;
+
+    }
+
+    Vector2 Seperation(List<GameObject> agents) {
+        Vector2 averagePosition = new Vector2();
+        Vector2 fasterAverage = new Vector2();
+
+        foreach (GameObject obj in agents)
+        {
+            Vector2 difference = transform.position - obj.transform.position;
+
+            difference /= Vector2.Distance(transform.position, obj.transform.position);
+
+            averagePosition += difference;
+        }
+
+        if (agents.Count > 0)
+        {
+            averagePosition /= agents.Count;
+
+            averagePosition.Normalize();
+            
+        }
+
+        return averagePosition;
 
     }
 
