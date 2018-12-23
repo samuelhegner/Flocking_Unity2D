@@ -5,9 +5,15 @@ using UnityEngine;
 public class Flocking_Agent : MonoBehaviour
 {
 
+    public bool cohesion;
+    public bool seperation;
+    public bool alignment;
+
     public List<GameObject> localAgents = new List<GameObject>();
 
     Rigidbody2D rb;
+
+    Camera cam;
 
     public float maxSpeed;
     public float maxForce;
@@ -16,11 +22,27 @@ public class Flocking_Agent : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         rb.velocity = Random.insideUnitCircle * maxSpeed;
+
+        cam = Camera.main;
     }
 
     void Update()
     {
-        rb.AddForce(Seperation(localAgents));
+        Vector2 forceToAdd = new Vector2();
+
+        if (cohesion) {
+            forceToAdd += Cohesion(localAgents);
+        }
+
+        if (alignment) {
+            forceToAdd += Alignment(localAgents);
+        }
+
+        if (seperation) {
+            forceToAdd += Seperation(localAgents);
+        }
+
+        rb.AddForce(forceToAdd, ForceMode2D.Force);
 
         Wrap();
     }
@@ -96,9 +118,13 @@ public class Flocking_Agent : MonoBehaviour
 
         foreach (GameObject obj in agents)
         {
+            float distance = Vector2.Distance(transform.position, obj.transform.position);
+
             Vector2 difference = transform.position - obj.transform.position;
 
-            difference /= Vector2.Distance(transform.position, obj.transform.position);
+
+            difference /= distance * distance;
+            
 
             averagePosition += difference;
         }
@@ -108,28 +134,39 @@ public class Flocking_Agent : MonoBehaviour
             averagePosition /= agents.Count;
 
             averagePosition.Normalize();
-            
+            averagePosition *= maxSpeed;
+
+            fasterAverage = averagePosition - rb.velocity;
         }
 
-        return averagePosition;
+        if (fasterAverage.magnitude > maxForce) {
+            fasterAverage.Normalize();
+            fasterAverage *= maxForce;
+        }
+
+        return fasterAverage;
 
     }
 
     void Wrap() {
-        if (transform.position.x > 26)
+
+        Vector2 maxCam = cam.ScreenToWorldPoint(new Vector3(cam.pixelWidth, cam.pixelHeight, 0));
+        Vector2 minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));
+
+        if (transform.position.x > maxCam.x)
         {
-            transform.position = new Vector3(-26, transform.position.y, transform.position.z);
+            transform.position = new Vector3(minCam.x, transform.position.y, transform.position.z);
         }
-        else if (transform.position.x < -26) {
-            transform.position = new Vector3(26, transform.position.y, transform.position.z);
+        else if (transform.position.x < minCam.x) {
+            transform.position = new Vector3(maxCam.x, transform.position.y, transform.position.z);
         }
 
-        if (transform.position.y > 15)
+        if (transform.position.y > maxCam.y)
         {
-            transform.position = new Vector3(transform.position.x, -15, transform.position.z);
+            transform.position = new Vector3(transform.position.x, minCam.y, transform.position.z);
         }
-        else if (transform.position.y < -15) {
-            transform.position = new Vector3(transform.position.x, 15, transform.position.z);
+        else if (transform.position.y < minCam.y) {
+            transform.position = new Vector3(transform.position.x, maxCam.y, transform.position.z);
         }
     }
 }
