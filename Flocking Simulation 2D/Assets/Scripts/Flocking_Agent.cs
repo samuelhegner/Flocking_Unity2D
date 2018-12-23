@@ -9,6 +9,12 @@ public class Flocking_Agent : MonoBehaviour
     public bool seperation;
     public bool alignment;
 
+    public Gradient colourGrad;
+
+    SpriteRenderer sr;
+
+    Spawn_Agents spawner;
+
     public List<GameObject> localAgents = new List<GameObject>();
 
     Rigidbody2D rb;
@@ -18,16 +24,29 @@ public class Flocking_Agent : MonoBehaviour
     public float maxSpeed;
     public float maxForce;
 
+    float colEvaluation;
+
+    int highestNumberOfAgents;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.velocity = Random.insideUnitCircle * maxSpeed;
 
         cam = Camera.main;
+        sr = GetComponent<SpriteRenderer>();
+
+        spawner = GameObject.Find("Game_Manager").GetComponent<Spawn_Agents>();
     }
 
     void Update()
     {
+        if(localAgents.Count > highestNumberOfAgents && highestNumberOfAgents < spawner.numberOfAgents/4)
+        highestNumberOfAgents = localAgents.Count;
+
+        colEvaluation = (float)localAgents.Count / highestNumberOfAgents;
+        sr.color = colourGrad.Evaluate(colEvaluation);
+
         Vector2 forceToAdd = new Vector2();
 
         if (cohesion) {
@@ -49,14 +68,16 @@ public class Flocking_Agent : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (!localAgents.Contains(other.gameObject)) {
+        if (!localAgents.Contains(other.gameObject) && localAgents.Count< 20) {
             localAgents.Add(other.gameObject);
         }
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
-        localAgents.Remove(other.gameObject);
+        if (localAgents.Contains(other.gameObject)) {
+            localAgents.Remove(other.gameObject);
+        }
     }
 
     Vector2 Alignment(List<GameObject> agents) {
@@ -74,10 +95,10 @@ public class Flocking_Agent : MonoBehaviour
 
             fastAverage -= rb.velocity;
 
-            if (fastAverage.magnitude > maxForce)
+            if (fastAverage.magnitude > maxForce *2 )
             {
                 fastAverage.Normalize();
-                fastAverage *= maxForce;
+                fastAverage *= maxForce *2;
             }
         }
         
@@ -139,13 +160,24 @@ public class Flocking_Agent : MonoBehaviour
             fasterAverage = averagePosition - rb.velocity;
         }
 
-        if (fasterAverage.magnitude > maxForce) {
-            fasterAverage.Normalize();
-            fasterAverage *= maxForce;
+        if (colEvaluation > 0.5)
+        {
+            if (fasterAverage.magnitude > maxForce *2)
+            {
+                fasterAverage.Normalize();
+                fasterAverage *= maxForce *2;
+            }
         }
+        else {
+            if (fasterAverage.magnitude > maxForce)
+            {
+                fasterAverage.Normalize();
+                fasterAverage *= maxForce;
+            }
+        }
+        
 
         return fasterAverage;
-
     }
 
     void Wrap() {
