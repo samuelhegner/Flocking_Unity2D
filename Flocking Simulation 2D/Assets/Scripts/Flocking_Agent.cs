@@ -38,6 +38,7 @@ public class Flocking_Agent : MonoBehaviour
 
     Vector2 Align(List<GameObject> agents) {
         Vector2 averageVelocity = new Vector2();
+        Vector2 fastAverage = new Vector2();
 
         foreach (GameObject obj in agents) {
             averageVelocity += obj.GetComponent<Rigidbody2D>().velocity;
@@ -45,10 +46,13 @@ public class Flocking_Agent : MonoBehaviour
 
         if (agents.Count > 0) {
             averageVelocity /= agents.Count;
-            averageVelocity -= rb.velocity;
+            averageVelocity.Normalize();
+            fastAverage = averageVelocity * maxSpeed;
+
+            fastAverage -= rb.velocity;
         }
         
-        return averageVelocity;
+        return fastAverage;
     }
 
     void Wrap() {
