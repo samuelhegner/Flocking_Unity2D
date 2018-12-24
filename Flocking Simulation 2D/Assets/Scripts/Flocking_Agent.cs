@@ -28,6 +28,9 @@ public class Flocking_Agent : MonoBehaviour
 
     int highestNumberOfAgents;
 
+    ParticleSystem.MainModule mm;
+
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -38,6 +41,9 @@ public class Flocking_Agent : MonoBehaviour
 
         spawner = GameObject.Find("Game_Manager").GetComponent<Spawn_Agents>();
         sr.color = colourGrad.Evaluate(0);
+
+        mm = GetComponent<ParticleSystem>().main;
+
     }
 
     void Update()
@@ -47,6 +53,9 @@ public class Flocking_Agent : MonoBehaviour
 
         colEvaluation = (float)localAgents.Count / highestNumberOfAgents;
         sr.color = Color.Lerp(sr.color, colourGrad.Evaluate(colEvaluation), Time.deltaTime);
+
+        mm.startColor = sr.color;
+
 
         Vector2 forceToAdd = new Vector2();
 
