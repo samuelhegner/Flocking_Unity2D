@@ -12,7 +12,7 @@ public class Spawn_Agents : MonoBehaviour
     void Start()
     {
         for (int i = 0; i < numberOfAgents; i++) {
-            Instantiate(agent, Random.insideUnitCircle * 20, Quaternion.identity);
+            Instantiate(agent, Random.insideUnitCircle * 50, Quaternion.identity);
         }
     }
 }
