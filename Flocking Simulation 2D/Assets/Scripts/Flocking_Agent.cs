@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class Flocking_Agent : MonoBehaviour
 {
-
     public bool cohesion;
     public bool seperation;
     public bool alignment;
@@ -29,6 +28,8 @@ public class Flocking_Agent : MonoBehaviour
     int highestNumberOfAgents;
 
     ParticleSystem.MainModule mm;
+    
+    [SerializeField] private float colourChangeSpeed = 2;
 
 
     void Start()
@@ -43,31 +44,34 @@ public class Flocking_Agent : MonoBehaviour
         sr.color = colourGrad.Evaluate(0);
 
         mm = GetComponent<ParticleSystem>().main;
-
     }
 
     void Update()
     {
-        if(localAgents.Count > highestNumberOfAgents && highestNumberOfAgents < spawner.numberOfAgents/4)
-        highestNumberOfAgents = localAgents.Count;
+        if (localAgents.Count > highestNumberOfAgents && highestNumberOfAgents < spawner.numberOfAgents / 4)
+            highestNumberOfAgents = localAgents.Count;
 
-        colEvaluation = (float)localAgents.Count / highestNumberOfAgents;
-        sr.color = Color.Lerp(sr.color, colourGrad.Evaluate(colEvaluation), Time.deltaTime);
+        colEvaluation = Mathf.Clamp((float) localAgents.Count / highestNumberOfAgents, 0f, 1f);
+        
+        sr.color = Color.Lerp(sr.color, colourGrad.Evaluate(colEvaluation), Time.deltaTime * colourChangeSpeed);
 
         mm.startColor = sr.color;
 
 
         Vector2 forceToAdd = new Vector2();
 
-        if (cohesion) {
+        if (cohesion)
+        {
             forceToAdd += Cohesion(localAgents);
         }
 
-        if (alignment) {
+        if (alignment)
+        {
             forceToAdd += Alignment(localAgents);
         }
 
-        if (seperation) {
+        if (seperation)
+        {
             forceToAdd += Seperation(localAgents);
         }
 
@@ -78,27 +82,32 @@ public class Flocking_Agent : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (!localAgents.Contains(other.gameObject) && localAgents.Count< 20) {
+        if (!localAgents.Contains(other.gameObject) && localAgents.Count < 20)
+        {
             localAgents.Add(other.gameObject);
         }
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
-        if (localAgents.Contains(other.gameObject)) {
+        if (localAgents.Contains(other.gameObject))
+        {
             localAgents.Remove(other.gameObject);
         }
     }
 
-    Vector2 Alignment(List<GameObject> agents) {
+    Vector2 Alignment(List<GameObject> agents)
+    {
         Vector2 averageVelocity = new Vector2();
         Vector2 fastAverage = new Vector2();
 
-        foreach (GameObject obj in agents) {
+        foreach (GameObject obj in agents)
+        {
             averageVelocity += obj.GetComponent<Rigidbody2D>().velocity;
         }
 
-        if (agents.Count > 0) {
+        if (agents.Count > 0)
+        {
             averageVelocity /= agents.Count;
             averageVelocity.Normalize();
             fastAverage = averageVelocity * maxSpeed;
@@ -111,11 +120,12 @@ public class Flocking_Agent : MonoBehaviour
                 fastAverage *= maxForce * 2;
             }
         }
-        
+
         return fastAverage;
     }
 
-    Vector2 Cohesion(List<GameObject> agents) {
+    Vector2 Cohesion(List<GameObject> agents)
+    {
         Vector2 averagePosition = new Vector2();
         Vector2 fasterAverage = new Vector2();
 
@@ -133,17 +143,18 @@ public class Flocking_Agent : MonoBehaviour
             fasterAverage = averagePosition * maxSpeed;
             fasterAverage -= rb.velocity;
 
-            if (fasterAverage.magnitude > maxForce) {
+            if (fasterAverage.magnitude > maxForce)
+            {
                 fasterAverage.Normalize();
                 fasterAverage *= maxForce;
             }
         }
 
         return fasterAverage;
-
     }
 
-    Vector2 Seperation(List<GameObject> agents) {
+    Vector2 Seperation(List<GameObject> agents)
+    {
         Vector2 averagePosition = new Vector2();
         Vector2 fasterAverage = new Vector2();
 
@@ -155,7 +166,7 @@ public class Flocking_Agent : MonoBehaviour
 
 
             difference /= distance;
-            
+
 
             averagePosition += difference;
         }
@@ -178,20 +189,21 @@ public class Flocking_Agent : MonoBehaviour
                 fasterAverage *= maxForce * 2;
             }
         }
-        else {
+        else
+        {
             if (fasterAverage.magnitude > maxForce)
             {
                 fasterAverage.Normalize();
                 fasterAverage *= maxForce;
             }
         }
-        
+
 
         return fasterAverage;
     }
 
-    void Wrap() {
-
+    void Wrap()
+    {
         Vector2 maxCam = cam.ScreenToWorldPoint(new Vector3(cam.pixelWidth, cam.pixelHeight, 0));
         Vector2 minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));
 
@@ -199,7 +211,8 @@ public class Flocking_Agent : MonoBehaviour
         {
             transform.position = new Vector3(minCam.x, transform.position.y, transform.position.z);
         }
-        else if (transform.position.x < minCam.x) {
+        else if (transform.position.x < minCam.x)
+        {
             transform.position = new Vector3(maxCam.x, transform.position.y, transform.position.z);
         }
 
@@ -207,7 +220,8 @@ public class Flocking_Agent : MonoBehaviour
         {
             transform.position = new Vector3(transform.position.x, minCam.y, transform.position.z);
         }
-        else if (transform.position.y < minCam.y) {
+        else if (transform.position.y < minCam.y)
+        {
             transform.position = new Vector3(transform.position.x, maxCam.y, transform.position.z);
         }
     }
