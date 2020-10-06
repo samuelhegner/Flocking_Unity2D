@@ -23,12 +23,11 @@ public class Flocking_Agent : MonoBehaviour
     public float maxSpeed;
     public float maxForce;
 
-    float colEvaluation;
 
-    int highestNumberOfAgents;
+    [SerializeField] private int highestNumberOfAgents = 20;
 
     ParticleSystem.MainModule mm;
-    
+
     [SerializeField] private float colourChangeSpeed = 2;
 
 
@@ -48,12 +47,15 @@ public class Flocking_Agent : MonoBehaviour
 
     void Update()
     {
-        if (localAgents.Count > highestNumberOfAgents && highestNumberOfAgents < spawner.numberOfAgents / 4)
-            highestNumberOfAgents = localAgents.Count;
+        float colValue = 0;
 
-        colEvaluation = Mathf.Clamp((float) localAgents.Count / highestNumberOfAgents, 0f, 1f);
-        
-        sr.color = Color.Lerp(sr.color, colourGrad.Evaluate(colEvaluation), Time.deltaTime * colourChangeSpeed);
+
+        if (localAgents.Count > 0)
+        {
+            colValue = Mathf.Clamp((float)localAgents.Count / highestNumberOfAgents, 0f, 1f);
+        }
+
+        sr.color = Color.Lerp(sr.color, colourGrad.Evaluate(colValue), Time.deltaTime * colourChangeSpeed);
 
         mm.startColor = sr.color;
 
@@ -82,7 +84,7 @@ public class Flocking_Agent : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (!localAgents.Contains(other.gameObject) && localAgents.Count < 20)
+        if (!localAgents.Contains(other.gameObject) && localAgents.Count < highestNumberOfAgents)
         {
             localAgents.Add(other.gameObject);
         }
@@ -181,23 +183,11 @@ public class Flocking_Agent : MonoBehaviour
             fasterAverage = averagePosition - rb.velocity;
         }
 
-        if (colEvaluation > 0.6)
+        if (fasterAverage.magnitude > maxForce)
         {
-            if (fasterAverage.magnitude > maxForce)
-            {
-                fasterAverage.Normalize();
-                fasterAverage *= maxForce * 2;
-            }
+            fasterAverage.Normalize();
+            fasterAverage *= maxForce;
         }
-        else
-        {
-            if (fasterAverage.magnitude > maxForce)
-            {
-                fasterAverage.Normalize();
-                fasterAverage *= maxForce;
-            }
-        }
-
 
         return fasterAverage;
     }
