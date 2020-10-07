@@ -9,6 +9,8 @@ public class ControlAgents : MonoBehaviour
 {
     [SerializeField] [Range(0, 500)] private int numberOfAgentsToSpawn = 200;
 
+    [SerializeField] private bool useJobs;
+
 
 
     [SerializeField] private GameObject agentPrefab;
@@ -58,32 +60,44 @@ public class ControlAgents : MonoBehaviour
 
     void Update()
     {
-        UpdateAgentCount();
-
-        NativeArray<float2> calculatedSteeringForceArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
-
-        NativeArray<float2> positionArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
-
-        NativeArray<float2> velocityArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
-
-
-        //Fill native arrays with data
-        for (int i = 0; i < agents.Count; i++)
+        if (useJobs)
         {
-            calculatedSteeringForceArray[i] = 0;
-            positionArray[i] = (Vector2)agents[i].transform.position;
-            velocityArray[i] = agents[i].Velocity;
+            UpdateAgentCount();
+
+            NativeArray<float2> calculatedSteeringForceArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
+
+            NativeArray<float2> positionArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
+
+            NativeArray<float2> velocityArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
+
+
+            //Fill native arrays with data
+            for (int i = 0; i < agents.Count; i++)
+            {
+                UpdateAgentSpeed(agents[i]);
+                Wrap(agents[i].transform);
+
+                calculatedSteeringForceArray[i] = 0;
+                positionArray[i] = (Vector2)agents[i].transform.position;
+                velocityArray[i] = agents[i].Velocity;
+            }
+
+
+            for (int i = 0; i < agents.Count; i++)
+            {
+                agents[i].Acceleration = calculatedSteeringForceArray[i];
+            }
+
+            positionArray.Dispose();
+            velocityArray.Dispose();
+            calculatedSteeringForceArray.Dispose();
+        }
+        else
+        {
+
         }
 
 
-        for (int i = 0; i < agents.Count; i++)
-        {
-            agents[i].Acceleration = calculatedSteeringForceArray[i];
-        }
-
-        positionArray.Dispose();
-        velocityArray.Dispose();
-        calculatedSteeringForceArray.Dispose();
 
 
 
@@ -285,8 +299,8 @@ public struct FlockingParallelJob : IJobParallelFor
 
     NativeArray<float2> velocityArray;
 
-    float deltaTime;
-
+    public float maxSpeed;
+    public float maxForce;
     float perceptionRange;
 
     public void Execute(int index)
@@ -296,51 +310,53 @@ public struct FlockingParallelJob : IJobParallelFor
         float2 alignmentForce = new float2();
         float2 separationForce = new float2();
         float2 cohesionForce = new float2();
+
+        int neighbourCount = 0;
+
         //check distance
         for (int i = 0; i < positionArray.Length; i++)
         {
             float distance = math.distance(positionArray[index], positionArray[i]);
 
-            if (distance < perceptionRange)
+            if (index != i && distance < perceptionRange)
             {
+                //alignment
+                alignmentForce += velocityArray[i];
 
+                //cohesion
+                cohesionForce += positionArray[i];
+
+                //separation
+
+
+                neighbourCount++;
             }
         }
-            
-            
 
 
-        //alignment, speration and cohesion
+
+        if (neighbourCount > 0)
+        {
+            //alignment
+            alignmentForce /= neighbourCount;
+            alignmentForce = math.normalize(alignmentForce);
+            alignmentForce *= maxSpeed;
+            alignmentForce -= velocityArray[index];
+            alignmentForce = Vector2.ClampMagnitude(alignmentForce, maxForce);
+
+            //cohesion
+            cohesionForce /= neighbourCount;
+            cohesionForce -= positionArray[index];
+            cohesionForce.Normalize();
+            cohesionForce *= currentAgent.MaxSpeed;
+            cohesionForce -= currentAgent.Velocity;
+            cohesionForce = Vector2.ClampMagnitude(steeringForce, agentMaxForce);
+
+            //separation
+
+        }
+
+        //add values and multiply by editable values
+
     }
 }
-
-/*public struct AlignmentParallelJob : IJobParallelFor
-{
-    NativeArray<float2> calculatedSteeringForceArray;
-
-    NativeArray<float3> positionArray;
-
-    NativeArray<float2> velocityArray;
-
-    public void Execute(int index)
-    {
-        float2 steeringForce = new float2();
-
-        for (int i = 0; i < neighbours.Length; i++)
-        {
-            steeringForce += neighbours[i].Velocity;
-        }
-
-
-        if (neighbours.Length > 0)
-        {
-            steeringForce /= neighbours.Length;
-            steeringForce.Normalize();
-            steeringForce *= currentAgent.MaxSpeed;
-            steeringForce -= currentAgent.Velocity;
-            steeringForce = Vector2.ClampMagnitude(steeringForce, agentMaxForce);
-        }
-
-        return steeringForce;
-    }
-}*/
