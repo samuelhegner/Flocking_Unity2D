@@ -41,7 +41,7 @@ public class AgentMovement : MonoBehaviour
         velocity = Random.insideUnitCircle * maxSpeed;
     }
 
-    void Update()
+    void FixedUpdate()
     {
         transform.position += (Vector3)Vector2.ClampMagnitude(velocity, maxSpeed);
         velocity += acceleration;

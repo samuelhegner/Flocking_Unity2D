@@ -12,9 +12,11 @@ public class ControlAgents : MonoBehaviour
 
     [SerializeField] [Range(0, 2)] private float maximumForce = 2f;
 
-    [SerializeField] [Range(0, 180)] private float visionRadiusAngle = 90f;
 
     [SerializeField] bool useVisionRadius = false;
+
+    [SerializeField] [Range(0, 180)] private float visionRadiusAngle = 90f;
+
 
 
 
@@ -22,7 +24,7 @@ public class ControlAgents : MonoBehaviour
 
     [SerializeField] private GameObject agentPrefab;
 
-    [SerializeField] private int numberOfAgentsToSpawn;
+    [SerializeField] [Range(0, 500)] private int numberOfAgentsToSpawn = 200;
 
     [SerializeField] private List<AgentMovement> agents;
 
@@ -66,6 +68,8 @@ public class ControlAgents : MonoBehaviour
 
     void Update()
     {
+        UpdateAgentCount();
+
         for (int i = 0; i < numberOfAgentsToSpawn; i++)
         {
             Wrap(agents[i].transform);
@@ -213,6 +217,33 @@ public class ControlAgents : MonoBehaviour
         else
         {
             return true;
+        }
+    }
+
+    void UpdateAgentCount()
+    {
+        if (agents.Count == numberOfAgentsToSpawn) return;
+
+        if (agents.Count < numberOfAgentsToSpawn)
+        {
+            while (agents.Count < numberOfAgentsToSpawn)
+            {
+                agents.Add(Instantiate(agentPrefab,
+                             new Vector2(Random.Range(minCam.x, maxCam.x), Random.Range(minCam.y, maxCam.y)),
+                              Quaternion.identity,
+                               transform).GetComponent<AgentMovement>());
+            }
+
+        }
+        else
+        {
+            while (agents.Count > numberOfAgentsToSpawn)
+            {
+                AgentMovement agentToRemove = agents[agents.Count - 1];
+                agents.Remove(agentToRemove);
+                Destroy(agentToRemove.gameObject);
+            }
+
         }
     }
 }
