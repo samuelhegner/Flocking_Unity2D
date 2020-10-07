@@ -9,7 +9,7 @@ using UnityEngine.Jobs;
 
 public class ControlAgents : MonoBehaviour
 {
-    [SerializeField] [Range(0, 500)] private int numberOfAgentsToSpawn = 200;
+    [SerializeField] private int numberOfAgentsToSpawn = 200;
 
     [SerializeField] private bool useJobs;
 
@@ -77,6 +77,8 @@ public class ControlAgents : MonoBehaviour
 
             NativeArray<float2> velocityArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
 
+            NativeArray<int> neighbourCountArray = new NativeArray<int>(agents.Count, Allocator.TempJob);
+
 
             //Fill native arrays with data
             for (int i = 0; i < agents.Count; i++)
@@ -85,6 +87,7 @@ public class ControlAgents : MonoBehaviour
                 calculatedSteeringForceArray[i] = 0;
                 positionArray[i] = (Vector2)agents[i].transform.position;
                 velocityArray[i] = agents[i].Velocity;
+                neighbourCountArray[i] = 0;
             }
 
             FlockingParallelJob flockingParallelJob = new FlockingParallelJob
@@ -92,6 +95,7 @@ public class ControlAgents : MonoBehaviour
                 calculatedSteeringForceArray = calculatedSteeringForceArray,
                 positionArray = positionArray,
                 velocityArray = velocityArray,
+                neighbourCountArray = neighbourCountArray,
                 maxForce = agentMaxForce,
                 maxSpeed = agentMaxSpeed,
                 perceptionRange = agentPerceptionRange,
@@ -101,7 +105,7 @@ public class ControlAgents : MonoBehaviour
                 cohesionForceMult = agentCohesionForce
             };
 
-            JobHandle jobHandle = flockingParallelJob.Schedule(agents.Count, 1);
+            JobHandle jobHandle = flockingParallelJob.Schedule(agents.Count, 100);
 
             jobHandle.Complete();
 
@@ -110,6 +114,7 @@ public class ControlAgents : MonoBehaviour
             for (int i = 0; i < agents.Count; i++)
             {
                 agents[i].Acceleration = calculatedSteeringForceArray[i];
+                agents[i].NeighbourCount = neighbourCountArray[i];
             }
 
 
@@ -117,6 +122,7 @@ public class ControlAgents : MonoBehaviour
             positionArray.Dispose();
             velocityArray.Dispose();
             calculatedSteeringForceArray.Dispose();
+            neighbourCountArray.Dispose();
         }
         else
         {
@@ -318,6 +324,8 @@ public struct FlockingParallelJob : IJobParallelFor
 
     [ReadOnly] public NativeArray<float2> velocityArray;
 
+    public NativeArray<int> neighbourCountArray;
+
     public float maxSpeed;
     public float maxForce;
     public float perceptionRange;
@@ -362,7 +370,7 @@ public struct FlockingParallelJob : IJobParallelFor
             }
         }
 
-
+        neighbourCountArray[index] = neighbourCount;
 
         if (neighbourCount > 0)
         {

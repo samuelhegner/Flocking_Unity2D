@@ -48,11 +48,10 @@ public class AgentMovement : MonoBehaviour
         minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));
     }
 
-    void Update()
+    void FixedUpdate()
     {
         Wrap();
 
-        //print("The agents" + gameObject.name + "velocity:" + velocity);
         transform.position += (Vector3)Vector2.ClampMagnitude(velocity, maxSpeed);
         velocity += acceleration;
     }
