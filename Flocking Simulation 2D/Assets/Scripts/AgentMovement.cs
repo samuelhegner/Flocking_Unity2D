@@ -42,18 +42,18 @@ public class AgentMovement : MonoBehaviour
 
     void Awake()
     {
-        velocity = Random.insideUnitCircle * maxSpeed;
+        /*velocity = Random.insideUnitCircle * maxSpeed;
         Camera cam = Camera.main;
         maxCam = cam.ScreenToWorldPoint(new Vector3(cam.pixelWidth, cam.pixelHeight, 0));
-        minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));
+        minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));*/
     }
 
     void FixedUpdate()
     {
-        Wrap();
+        /*Wrap();
 
         transform.position += (Vector3)Vector2.ClampMagnitude(velocity, maxSpeed);
-        velocity += acceleration;
+        velocity += acceleration;*/
     }
 
     private void Wrap()

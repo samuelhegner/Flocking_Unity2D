@@ -33,6 +33,8 @@ public class ControlAgents : MonoBehaviour
 
     private List<AgentMovement> agents = new List<AgentMovement>();
 
+    private List<float2> persistentVelocity = new List<float2>();
+
     Vector2 maxCam;
     Vector2 minCam;
 
@@ -47,6 +49,8 @@ public class ControlAgents : MonoBehaviour
     public float AgentPerceptionRange { get => agentPerceptionRange; set => agentPerceptionRange = value; }
     public bool UseJobs { get => useJobs; set => useJobs = value; }
 
+
+
     void Start()
     {
         Camera cam = Camera.main;
@@ -56,9 +60,9 @@ public class ControlAgents : MonoBehaviour
 
         for (int i = 0; i < numberOfAgentsToSpawn; i++)
         {
-
             agents.Add(Instantiate(agentPrefab, new Vector2(UnityEngine.Random.Range(minCam.x, maxCam.x), UnityEngine.Random.Range(minCam.y, maxCam.y)), Quaternion.identity, transform).GetComponent<AgentMovement>());
             agents[i].transform.name = i.ToString();
+            persistentVelocity.Add(UnityEngine.Random.insideUnitCircle * agentMaxSpeed);
         }
 
     }
@@ -86,7 +90,7 @@ public class ControlAgents : MonoBehaviour
                 UpdateAgentSpeed(agents[i]);
                 calculatedSteeringForceArray[i] = 0;
                 positionArray[i] = (Vector2)agents[i].transform.position;
-                velocityArray[i] = agents[i].Velocity;
+                velocityArray[i] = persistentVelocity[i];
                 neighbourCountArray[i] = 0;
             }
 
@@ -105,19 +109,35 @@ public class ControlAgents : MonoBehaviour
                 cohesionForceMult = agentCohesionForce
             };
 
-            JobHandle jobHandle = flockingParallelJob.Schedule(agents.Count, 100);
+            JobHandle flockingJobHandle = flockingParallelJob.Schedule(agents.Count, 100);
 
-            jobHandle.Complete();
+            flockingJobHandle.Complete();
 
 
+
+
+
+            MoveAgentsParallelJob moveAgentsParallelJob = new MoveAgentsParallelJob
+            {
+                calculatedSteeringForceArray = calculatedSteeringForceArray,
+                positionArray = positionArray,
+                velocityArray = velocityArray,
+                maxSpeed = agentMaxSpeed,
+                deltaTime = Time.deltaTime,
+                minCam = minCam,
+                maxCam = maxCam
+            };
+
+            JobHandle movementJobHandle = moveAgentsParallelJob.Schedule(agents.Count, 100);
+            
+            movementJobHandle.Complete();
 
             for (int i = 0; i < agents.Count; i++)
             {
-                agents[i].Acceleration = calculatedSteeringForceArray[i];
                 agents[i].NeighbourCount = neighbourCountArray[i];
+                persistentVelocity[i] = velocityArray[i];
+                agents[i].transform.position = new Vector3(positionArray[i].x, positionArray[i].y, 0);
             }
-
-
 
             positionArray.Dispose();
             velocityArray.Dispose();
@@ -299,6 +319,7 @@ public class ControlAgents : MonoBehaviour
                              new Vector2(UnityEngine.Random.Range(minCam.x, maxCam.x), UnityEngine.Random.Range(minCam.y, maxCam.y)),
                               Quaternion.identity,
                                transform).GetComponent<AgentMovement>());
+                persistentVelocity.Add(UnityEngine.Random.insideUnitCircle * agentMaxSpeed);
             }
 
         }
@@ -307,6 +328,7 @@ public class ControlAgents : MonoBehaviour
             while (agents.Count > numberOfAgentsToSpawn)
             {
                 AgentMovement agentToRemove = agents[agents.Count - 1];
+                persistentVelocity.Remove(agents.Count - 1);
                 agents.Remove(agentToRemove);
                 Destroy(agentToRemove.gameObject);
             }
@@ -406,6 +428,7 @@ public struct FlockingParallelJob : IJobParallelFor
     }
 }
 
+[BurstCompile]
 struct MoveAgentsParallelJob : IJobParallelFor
 {
     [ReadOnly] public NativeArray<float2> calculatedSteeringForceArray;
@@ -416,9 +439,37 @@ struct MoveAgentsParallelJob : IJobParallelFor
 
     public float maxSpeed;
 
+    public float deltaTime;
+
+    public float2 minCam;
+    public float2 maxCam;
+
     public void Execute(int index)
     {
-        positionArray[index] += (float2)Vector2.ClampMagnitude(velocityArray[index], maxSpeed);
-        velocityArray[index] += calculatedSteeringForceArray[index];
+        if (positionArray[index].x > maxCam.x)
+        {
+            positionArray[index] = new float2(minCam.x, positionArray[index].y);
+        }
+        else if (positionArray[index].x < minCam.x)
+        {
+            positionArray[index] = new float2(maxCam.x, positionArray[index].y);
+        }
+
+        if (positionArray[index].y > maxCam.y)
+        {
+            positionArray[index] = new float2(positionArray[index].x, minCam.y);
+        }
+        else if (positionArray[index].y < minCam.y)
+        {
+            positionArray[index] = new float2(positionArray[index].x, maxCam.y);
+        }
+        
+        velocityArray[index] += calculatedSteeringForceArray[index] * deltaTime;
+        
+        float2 clampedVelocity = (float2)Vector2.ClampMagnitude(velocityArray[index], maxSpeed);
+
+        positionArray[index] += clampedVelocity * deltaTime;
+        
+        
     }
 }

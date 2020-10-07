@@ -29,7 +29,7 @@ public class ControlAgentEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Agent Movement Options");
         controlAgents.AgentPerceptionRange = EditorGUILayout.Slider("Perception Range: ", controlAgents.AgentPerceptionRange, 0, 100);
-        controlAgents.AgentMaxSpeed = EditorGUILayout.Slider("Maximum Speed: ", controlAgents.AgentMaxSpeed, 0, 10);
+        controlAgents.AgentMaxSpeed = EditorGUILayout.Slider("Maximum Speed: ", controlAgents.AgentMaxSpeed, 0, 300);
         controlAgents.UseVisionRadius = EditorGUILayout.Toggle("Use Vision Radius: ", controlAgents.UseVisionRadius);
 
         if (controlAgents.UseVisionRadius)
