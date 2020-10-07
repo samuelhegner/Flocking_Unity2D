@@ -4,53 +4,31 @@ using UnityEngine;
 
 public class ControlAgents : MonoBehaviour
 {
+    [SerializeField] [Range(0, 500)] private int numberOfAgentsToSpawn = 200;
+
+    [SerializeField] private GameObject agentPrefab;
 
 
-    [SerializeField] [Range(0, 2)] private float alignmentForce = 1;
-    [SerializeField] [Range(0, 2)] private float separationForce = 1;
-    [SerializeField] [Range(0, 2)] private float cohesionForce = 1;
+    [SerializeField] [Range(0, 2)] private float agentAlignmentForce = 1;
+    [SerializeField] [Range(0, 2)] private float agentSeparationForce = 1;
+    [SerializeField] [Range(0, 2)] private float agentCohesionForce = 1;
 
-    [SerializeField] [Range(0, 2)] private float maximumForce = 2f;
+    [SerializeField] [Range(1, 10)] private float agentMaxSpeed = 5;
+    [SerializeField] [Range(0, 2)] private float agentMaxForce = 2f;
 
 
     [SerializeField] bool useVisionRadius = false;
 
     [SerializeField] [Range(0, 180)] private float visionRadiusAngle = 90f;
 
+    [SerializeField] private float agentPerceptionRange = 10f;
 
 
 
-    [SerializeField] private float agentNeighbourRange = 10f;
-
-    [SerializeField] private GameObject agentPrefab;
-
-    [SerializeField] [Range(0, 500)] private int numberOfAgentsToSpawn = 200;
-
-    [SerializeField] private List<AgentMovement> agents;
+    private List<AgentMovement> agents;
 
     Vector2 maxCam;
     Vector2 minCam;
-
-
-    public float CohesionForce
-    {
-        get => cohesionForce;
-    }
-
-    public float SeparationForce
-    {
-        get => separationForce;
-    }
-
-    public float AlignmentForce
-    {
-        get => alignmentForce;
-    }
-
-    public float NumberOfAgentsToSpawn
-    {
-        get => numberOfAgentsToSpawn;
-    }
 
     void Start()
     {
@@ -78,11 +56,11 @@ public class ControlAgents : MonoBehaviour
 
             AgentMovement[] agentNeighbours = CalculateNeighbours(agents[i]);
 
-            calculatedSteeringForce += CalculateSeparationForce(agents[i], agentNeighbours) * separationForce;
+            calculatedSteeringForce += CalculateSeparationForce(agents[i], agentNeighbours) * agentSeparationForce;
 
-            calculatedSteeringForce += CalculateAlignmentForce(agents[i], agentNeighbours) * alignmentForce;
+            calculatedSteeringForce += CalculateAlignmentForce(agents[i], agentNeighbours) * agentAlignmentForce;
 
-            calculatedSteeringForce += CalculateCohesionForce(agents[i], agentNeighbours) * cohesionForce;
+            calculatedSteeringForce += CalculateCohesionForce(agents[i], agentNeighbours) * agentCohesionForce;
 
             agents[i].Acceleration = calculatedSteeringForce;
         }
@@ -98,7 +76,7 @@ public class ControlAgents : MonoBehaviour
             {
                 if (CheckForNeighbourInFront(agentToCheck, agents[i]))
                 {
-                    if (Vector2.Distance(agentToCheck.transform.position, agents[i].transform.position) < agentNeighbourRange)
+                    if (Vector2.Distance(agentToCheck.transform.position, agents[i].transform.position) < agentPerceptionRange)
                     {
                         neighbours.Add(agents[i]);
                     }
@@ -127,7 +105,7 @@ public class ControlAgents : MonoBehaviour
             steeringForce.Normalize();
             steeringForce *= currentAgent.MaxSpeed;
             steeringForce -= currentAgent.Velocity;
-            steeringForce = Vector2.ClampMagnitude(steeringForce, maximumForce);
+            steeringForce = Vector2.ClampMagnitude(steeringForce, agentMaxForce);
         }
 
         return steeringForce;
@@ -150,7 +128,7 @@ public class ControlAgents : MonoBehaviour
             steeringForce.Normalize();
             steeringForce *= currentAgent.MaxSpeed;
             steeringForce -= currentAgent.Velocity;
-            steeringForce = Vector2.ClampMagnitude(steeringForce, maximumForce);
+            steeringForce = Vector2.ClampMagnitude(steeringForce, agentMaxForce);
         }
 
         return steeringForce;
@@ -176,7 +154,7 @@ public class ControlAgents : MonoBehaviour
             steeringForce.Normalize();
             steeringForce *= currentAgent.MaxSpeed;
             steeringForce -= currentAgent.Velocity;
-            steeringForce = Vector2.ClampMagnitude(steeringForce, maximumForce);
+            steeringForce = Vector2.ClampMagnitude(steeringForce, agentMaxForce);
         }
 
         return steeringForce;
