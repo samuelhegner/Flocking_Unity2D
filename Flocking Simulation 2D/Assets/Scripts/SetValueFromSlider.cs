@@ -10,7 +10,7 @@ public class SetValueFromSlider : MonoBehaviour
 
     [SerializeField] private Slider slider;
 
-    private void Awake()
+    private void Start()
     {
         slider.value = agents.NumberOfAgentsToSpawn;
     }
