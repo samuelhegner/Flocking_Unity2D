@@ -13,6 +13,8 @@ public class ColourChanging : MonoBehaviour
 
     [SerializeField] private Gradient colourGradient;
 
+    [SerializeField] private float colourLerpSpeed = 1f;
+
 
     float colourEvaluationAmount = 0;
 
@@ -33,6 +35,6 @@ public class ColourChanging : MonoBehaviour
             colourEvaluationAmount = movement.NeighbourCount / highestNumberOfNeighbours;
         }
 
-        spriteRenderer.color = Color.Lerp(spriteRenderer.color, colourGradient.Evaluate(colourEvaluationAmount), Time.deltaTime);
+        spriteRenderer.color = Color.Lerp(spriteRenderer.color, colourGradient.Evaluate(colourEvaluationAmount), Time.deltaTime * colourLerpSpeed);
     }
 }

@@ -168,10 +168,10 @@ MonoBehaviour:
   separationForce: 1
   cohesionForce: 1
   maximumForce: 1
-  agentNeighbourRange: 50
+  agentNeighbourRange: 45
   agentPrefab: {fileID: 3682561734965970249, guid: 9dfc09e18f4040d4c9e9baf4fcf21bb7,
     type: 3}
-  numberOfAgentsToSpawn: 20
+  numberOfAgentsToSpawn: 250
   agents: []
 --- !u!1 &519420028
 GameObject:
