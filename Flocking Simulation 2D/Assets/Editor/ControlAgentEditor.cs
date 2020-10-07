@@ -13,7 +13,7 @@ public class ControlAgentEditor : Editor
 
         EditorGUILayout.LabelField("Simulation Options", EditorStyles.boldLabel);
         EditorGUILayout.Space();
-        controlAgents.NumberOfAgentsToSpawn = EditorGUILayout.IntSlider("Number of Agents: ", controlAgents.NumberOfAgentsToSpawn, 0, 500);
+        controlAgents.NumberOfAgentsToSpawn = EditorGUILayout.IntSlider("Number of Agents: ", controlAgents.NumberOfAgentsToSpawn, 0, 5000);
         controlAgents.UseJobs = EditorGUILayout.Toggle("Use Jobs: ", controlAgents.UseJobs);
 
         EditorGUILayout.Space();
@@ -38,3 +38,4 @@ public class ControlAgentEditor : Editor
         }
     }
 }
+
