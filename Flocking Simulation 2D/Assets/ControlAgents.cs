@@ -113,6 +113,7 @@ public class ControlAgents : MonoBehaviour
             steeringForce.Normalize();
             steeringForce *= currentAgent.MaxSpeed;
             steeringForce -= currentAgent.Velocity;
+            steeringForce = Vector2.ClampMagnitude(steeringForce, maximumForce);
         }
 
         return steeringForce;
@@ -147,13 +148,21 @@ public class ControlAgents : MonoBehaviour
 
         for (int i = 0; i < neighbours.Length; i++)
         {
-            steeringForce += (Vector2)currentAgent.transform.position - (Vector2)neighbours[i].transform.position;
+            float distanceToNeighbour = Vector2.Distance(currentAgent.transform.position, neighbours[i].transform.position);
+
+            Vector2 vectorToCurrentAgent = currentAgent.transform.position - neighbours[i].transform.position;
+            vectorToCurrentAgent /= distanceToNeighbour;
+
+            steeringForce += vectorToCurrentAgent;
         }
 
         if (neighbours.Length > 0)
         {
             steeringForce /= neighbours.Length;
+            steeringForce.Normalize();
+            steeringForce *= currentAgent.MaxSpeed;
             steeringForce -= currentAgent.Velocity;
+            steeringForce = Vector2.ClampMagnitude(steeringForce, maximumForce);
         }
 
         return steeringForce;
