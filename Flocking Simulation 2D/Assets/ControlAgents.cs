@@ -12,6 +12,9 @@ public class ControlAgents : MonoBehaviour
 
     [SerializeField] [Range(0, 2)] private float maximumForce = 2f;
 
+    [SerializeField] [Range(0, 180)] private float visionRadiusAngle = 90f;
+
+
 
     [SerializeField] private float agentNeighbourRange = 10f;
 
@@ -87,10 +90,14 @@ public class ControlAgents : MonoBehaviour
         {
             if (agentToCheck != agents[i])
             {
-                if (Vector2.Distance(agentToCheck.transform.position, agents[i].transform.position) < agentNeighbourRange)
+                if (CheckForNeighbourInFront(agentToCheck, agents[i]))
                 {
-                    neighbours.Add(agents[i]);
+                    if (Vector2.Distance(agentToCheck.transform.position, agents[i].transform.position) < agentNeighbourRange)
+                    {
+                        neighbours.Add(agents[i]);
+                    }
                 }
+
             }
         }
 
@@ -190,5 +197,13 @@ public class ControlAgents : MonoBehaviour
         {
             agent.position = new Vector3(agent.position.x, maxCam.y, agent.position.z);
         }
+    }
+
+
+    bool CheckForNeighbourInFront(AgentMovement currentAgent, AgentMovement agentToCheck)
+    {
+        Vector2 toAgentToCheck = agentToCheck.transform.position - currentAgent.transform.position;
+
+        return Vector2.Angle(currentAgent.Velocity, toAgentToCheck) < visionRadiusAngle;
     }
 }
