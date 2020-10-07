@@ -14,6 +14,7 @@ public class ControlAgentEditor : Editor
         EditorGUILayout.LabelField("Simulation Options", EditorStyles.boldLabel);
         EditorGUILayout.Space();
         controlAgents.NumberOfAgentsToSpawn = EditorGUILayout.IntSlider("Number of Agents: ", controlAgents.NumberOfAgentsToSpawn, 0, 500);
+        controlAgents.UseJobs = EditorGUILayout.Toggle("Use Jobs: ", controlAgents.UseJobs);
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Agent Options", EditorStyles.boldLabel);
@@ -35,6 +36,5 @@ public class ControlAgentEditor : Editor
         {
             controlAgents.VisionRadiusAngle = EditorGUILayout.Slider("Vision Angle: ", controlAgents.VisionRadiusAngle, 0, 180);
         }
-
     }
 }
