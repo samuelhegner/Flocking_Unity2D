@@ -1,18 +1,21 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class SetValueFromSlider : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] private ControlAgents agents;
+
+    [SerializeField] private Slider slider;
+
+    private void Awake()
     {
-        
+        slider.value = agents.NumberOfAgentsToSpawn;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    public void ChangeValue(float newValue) {
+        agents.NumberOfAgentsToSpawn = (int)newValue;
     }
 }
