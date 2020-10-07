@@ -327,8 +327,13 @@ public struct FlockingParallelJob : IJobParallelFor
                 cohesionForce += positionArray[i];
 
                 //separation
+                float2 vectorToCurrentAgent = positionArray[index]- positionArray[index][i];
+                vectorToCurrentAgent /= distance;
+
+                separationForce += vectorToCurrentAgent;
 
 
+                //increase Neighbour count
                 neighbourCount++;
             }
         }
@@ -347,13 +352,17 @@ public struct FlockingParallelJob : IJobParallelFor
             //cohesion
             cohesionForce /= neighbourCount;
             cohesionForce -= positionArray[index];
-            cohesionForce.Normalize();
-            cohesionForce *= currentAgent.MaxSpeed;
-            cohesionForce -= currentAgent.Velocity;
-            cohesionForce = Vector2.ClampMagnitude(steeringForce, agentMaxForce);
+            cohesionForce = math.normalize(cohesionForce);
+            cohesionForce *= maxSpeed;
+            cohesionForce -= velocityArray[index];
+            cohesionForce = Vector2.ClampMagnitude(cohesionForce, maxForce);
 
             //separation
-
+            separationForce /= neighbourCount;
+            separationForce = math.normalize(separationForce);
+            separationForce *= maxSpeed;
+            separationForce -= velocityArray[index];
+            separationForce = Vector2.ClampMagnitude(separationForce, maxForce);
         }
 
         //add values and multiply by editable values
