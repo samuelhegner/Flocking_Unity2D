@@ -8,6 +8,8 @@ public class AgentMovement : MonoBehaviour
 
     private Vector2 acceleration;
 
+    private float neighbourCount;
+
     [SerializeField] private float maxSpeed = 10f;
 
 
@@ -26,6 +28,12 @@ public class AgentMovement : MonoBehaviour
     public float MaxSpeed
     {
         get => maxSpeed;
+    }
+
+    public float NeighbourCount
+    {
+        get => neighbourCount;
+        set => neighbourCount = value;
     }
 
     void Awake()

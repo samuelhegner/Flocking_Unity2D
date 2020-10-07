@@ -94,6 +94,7 @@ public class ControlAgents : MonoBehaviour
             }
         }
 
+        agentToCheck.NeighbourCount = neighbours.Count;
         return neighbours.ToArray();
     }
 

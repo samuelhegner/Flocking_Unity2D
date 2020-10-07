@@ -164,13 +164,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 852d9fad38bc1804cb8c9a603a6173f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  alignmentForce: 0.6
-  separationForce: 0
-  cohesionForce: 0.6
+  alignmentForce: 1
+  separationForce: 1
+  cohesionForce: 1
+  maximumForce: 1
   agentNeighbourRange: 50
   agentPrefab: {fileID: 3682561734965970249, guid: 9dfc09e18f4040d4c9e9baf4fcf21bb7,
     type: 3}
-  numberOfAgentsToSpawn: 200
+  numberOfAgentsToSpawn: 20
   agents: []
 --- !u!1 &519420028
 GameObject:
@@ -225,7 +226,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 500
+  orthographic size: 400
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
