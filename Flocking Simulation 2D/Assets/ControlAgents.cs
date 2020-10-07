@@ -6,29 +6,38 @@ public class ControlAgents : MonoBehaviour
 {
     [SerializeField] [Range(0, 500)] private int numberOfAgentsToSpawn = 200;
 
+
+
     [SerializeField] private GameObject agentPrefab;
 
 
-    [SerializeField] [Range(0, 2)] private float agentAlignmentForce = 1;
-    [SerializeField] [Range(0, 2)] private float agentSeparationForce = 1;
-    [SerializeField] [Range(0, 2)] private float agentCohesionForce = 1;
+    [SerializeField] private float agentAlignmentForce;
+    [SerializeField] private float agentSeparationForce;
+    [SerializeField] private float agentCohesionForce;
 
-    [SerializeField] [Range(1, 10)] private float agentMaxSpeed = 5;
-    [SerializeField] [Range(0, 2)] private float agentMaxForce = 2f;
+    [SerializeField] private float agentMaxSpeed;
+    [SerializeField] private float agentMaxForce;
 
+    [SerializeField] bool useVisionRadius;
 
-    [SerializeField] bool useVisionRadius = false;
+    [SerializeField] private float visionRadiusAngle;
 
-    [SerializeField] [Range(0, 180)] private float visionRadiusAngle = 90f;
+    [SerializeField] private float agentPerceptionRange;
 
-    [SerializeField] private float agentPerceptionRange = 10f;
-
-
-
-    private List<AgentMovement> agents;
+    private List<AgentMovement> agents = new List<AgentMovement>();
 
     Vector2 maxCam;
     Vector2 minCam;
+
+    public int NumberOfAgentsToSpawn { get => numberOfAgentsToSpawn; set => numberOfAgentsToSpawn = value; }
+    public float AgentAlignmentForce { get => agentAlignmentForce; set => agentAlignmentForce = value; }
+    public float AgentSeparationForce { get => agentSeparationForce; set => agentSeparationForce = value; }
+    public float AgentCohesionForce { get => agentCohesionForce; set => agentCohesionForce = value; }
+    public float AgentMaxSpeed { get => agentMaxSpeed; set => agentMaxSpeed = value; }
+    public float AgentMaxForce { get => agentMaxForce; set => agentMaxForce = value; }
+    public bool UseVisionRadius { get => useVisionRadius; set => useVisionRadius = value; }
+    public float VisionRadiusAngle { get => visionRadiusAngle; set => visionRadiusAngle = value; }
+    public float AgentPerceptionRange { get => agentPerceptionRange; set => agentPerceptionRange = value; }
 
     void Start()
     {
@@ -50,6 +59,7 @@ public class ControlAgents : MonoBehaviour
 
         for (int i = 0; i < numberOfAgentsToSpawn; i++)
         {
+            UpdateAgentSpeed(agents[i]);
             Wrap(agents[i].transform);
 
             Vector2 calculatedSteeringForce = Vector2.zero;
@@ -63,6 +73,13 @@ public class ControlAgents : MonoBehaviour
             calculatedSteeringForce += CalculateCohesionForce(agents[i], agentNeighbours) * agentCohesionForce;
 
             agents[i].Acceleration = calculatedSteeringForce;
+        }
+    }
+
+    private void UpdateAgentSpeed(AgentMovement agentToCheck)
+    {
+        if (agentToCheck.MaxSpeed != agentMaxSpeed) {
+            agentToCheck.MaxSpeed = agentMaxSpeed;
         }
     }
 

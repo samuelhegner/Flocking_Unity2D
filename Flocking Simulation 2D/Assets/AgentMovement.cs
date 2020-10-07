@@ -28,6 +28,7 @@ public class AgentMovement : MonoBehaviour
     public float MaxSpeed
     {
         get => maxSpeed;
+        set => maxSpeed = value;
     }
 
     public float NeighbourCount

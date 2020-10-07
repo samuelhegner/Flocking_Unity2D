@@ -132,7 +132,7 @@ GameObject:
   - component: {fileID: 344373660}
   - component: {fileID: 344373662}
   m_Layer: 0
-  m_Name: Game_Manager
+  m_Name: Game Manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -164,17 +164,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 852d9fad38bc1804cb8c9a603a6173f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  alignmentForce: 1
-  separationForce: 1
-  cohesionForce: 1
-  maximumForce: 1
-  useVisionRadius: 0
-  visionRadiusAngle: 90
-  agentNeighbourRange: 45
+  numberOfAgentsToSpawn: 350
   agentPrefab: {fileID: 3682561734965970249, guid: 9dfc09e18f4040d4c9e9baf4fcf21bb7,
     type: 3}
-  numberOfAgentsToSpawn: 200
-  agents: []
+  agentAlignmentForce: 1
+  agentSeparationForce: 1
+  agentCohesionForce: 1
+  agentMaxSpeed: 5
+  agentMaxForce: 1
+  useVisionRadius: 0
+  visionRadiusAngle: 0
+  agentPerceptionRange: 50
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -228,7 +228,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 400
+  orthographic size: 600
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
