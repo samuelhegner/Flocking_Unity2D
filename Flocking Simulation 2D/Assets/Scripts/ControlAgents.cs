@@ -43,6 +43,7 @@ public class ControlAgents : MonoBehaviour
     public bool UseVisionRadius { get => useVisionRadius; set => useVisionRadius = value; }
     public float VisionRadiusAngle { get => visionRadiusAngle; set => visionRadiusAngle = value; }
     public float AgentPerceptionRange { get => agentPerceptionRange; set => agentPerceptionRange = value; }
+    public bool UseJobs { get => useJobs; set => useJobs = value; }
 
     void Start()
     {
@@ -82,6 +83,19 @@ public class ControlAgents : MonoBehaviour
                 velocityArray[i] = agents[i].Velocity;
             }
 
+            FlockingParallelJob flockingParallelJob = new FlockingParallelJob
+            {
+                calculatedSteeringForceArray = calculatedSteeringForceArray,
+                positionArray = positionArray,
+                velocityArray = velocityArray,
+                maxForce = agentMaxForce,
+                maxSpeed = agentMaxSpeed,
+                perceptionRange = agentPerceptionRange,
+
+                alignmentForceMult = agentAlignmentForce,
+                separationForceMult = agentSeparationForce,
+                cohesionForceMult = agentCohesionForce
+            };
 
             for (int i = 0; i < agents.Count; i++)
             {
@@ -94,32 +108,25 @@ public class ControlAgents : MonoBehaviour
         }
         else
         {
+            // Old non Job system implementation
+            for (int i = 0; i < numberOfAgentsToSpawn; i++)
+            {
+                UpdateAgentSpeed(agents[i]);
+                Wrap(agents[i].transform);
 
+                Vector2 calculatedSteeringForce = Vector2.zero;
+
+                AgentMovement[] agentNeighbours = CalculateNeighbours(agents[i]);
+
+                calculatedSteeringForce += CalculateSeparationForce(agents[i], agentNeighbours) * agentSeparationForce;
+
+                calculatedSteeringForce += CalculateAlignmentForce(agents[i], agentNeighbours) * agentAlignmentForce;
+
+                calculatedSteeringForce += CalculateCohesionForce(agents[i], agentNeighbours) * agentCohesionForce;
+
+                agents[i].Acceleration = calculatedSteeringForce;
+            }
         }
-
-
-
-
-
-
-        // Old non Job system implementation
-        /*for (int i = 0; i < numberOfAgentsToSpawn; i++)
-        {
-            UpdateAgentSpeed(agents[i]);
-            Wrap(agents[i].transform);
-
-            Vector2 calculatedSteeringForce = Vector2.zero;
-
-            AgentMovement[] agentNeighbours = CalculateNeighbours(agents[i]);
-
-            calculatedSteeringForce += CalculateSeparationForce(agents[i], agentNeighbours) * agentSeparationForce;
-
-            calculatedSteeringForce += CalculateAlignmentForce(agents[i], agentNeighbours) * agentAlignmentForce;
-
-            calculatedSteeringForce += CalculateCohesionForce(agents[i], agentNeighbours) * agentCohesionForce;
-
-            agents[i].Acceleration = calculatedSteeringForce;
-        }*/
     }
 
     private void UpdateAgentSpeed(AgentMovement agentToCheck)
@@ -293,15 +300,20 @@ public class ControlAgents : MonoBehaviour
 
 public struct FlockingParallelJob : IJobParallelFor
 {
-    NativeArray<float2> calculatedSteeringForceArray;
+    public NativeArray<float2> calculatedSteeringForceArray;
 
-    NativeArray<float2> positionArray;
+    public NativeArray<float2> positionArray;
 
-    NativeArray<float2> velocityArray;
+    public NativeArray<float2> velocityArray;
 
     public float maxSpeed;
     public float maxForce;
-    float perceptionRange;
+    public float perceptionRange;
+
+    public float alignmentForceMult;
+    public float separationForceMult;
+    public float cohesionForceMult;
+
 
     public void Execute(int index)
     {
@@ -327,7 +339,7 @@ public struct FlockingParallelJob : IJobParallelFor
                 cohesionForce += positionArray[i];
 
                 //separation
-                float2 vectorToCurrentAgent = positionArray[index]- positionArray[index][i];
+                float2 vectorToCurrentAgent = positionArray[index] - positionArray[index][i];
                 vectorToCurrentAgent /= distance;
 
                 separationForce += vectorToCurrentAgent;
@@ -366,6 +378,10 @@ public struct FlockingParallelJob : IJobParallelFor
         }
 
         //add values and multiply by editable values
+        tempForce += alignmentForce * alignmentForceMult;
+        tempForce += cohesionForce * cohesionForceMult;
+        tempForce += separationForce * separationForceMult;
 
+        calculatedSteeringForceArray[index] = tempForce;
     }
 }
