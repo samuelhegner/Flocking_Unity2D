@@ -10,6 +10,9 @@ public class ControlAgents : MonoBehaviour
     [SerializeField] [Range(0, 2)] private float separationForce = 1;
     [SerializeField] [Range(0, 2)] private float cohesionForce = 1;
 
+    [SerializeField] [Range(0, 2)] private float maximumForce = 2f;
+
+
     [SerializeField] private float agentNeighbourRange = 10f;
 
     [SerializeField] private GameObject agentPrefab;
@@ -18,7 +21,8 @@ public class ControlAgents : MonoBehaviour
 
     [SerializeField] private List<AgentMovement> agents;
 
-
+    Vector2 maxCam;
+    Vector2 minCam;
 
 
     public float CohesionForce
@@ -45,8 +49,8 @@ public class ControlAgents : MonoBehaviour
     {
         Camera cam = Camera.main;
 
-        Vector2 maxCam = cam.ScreenToWorldPoint(new Vector3(cam.pixelWidth, cam.pixelHeight, 0));
-        Vector2 minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));
+        maxCam = cam.ScreenToWorldPoint(new Vector3(cam.pixelWidth, cam.pixelHeight, 0));
+        minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));
 
         for (int i = 0; i < numberOfAgentsToSpawn; i++)
         {
@@ -59,17 +63,19 @@ public class ControlAgents : MonoBehaviour
     {
         for (int i = 0; i < numberOfAgentsToSpawn; i++)
         {
-            Vector2 velocity = Vector2.zero;
+            Wrap(agents[i].transform);
+
+            Vector2 calculatedSteeringForce = Vector2.zero;
 
             AgentMovement[] agentNeighbours = CalculateNeighbours(agents[i]);
 
-            velocity += CalculateSeparationForce(agents[i], agentNeighbours) * separationForce;
+            calculatedSteeringForce += CalculateSeparationForce(agents[i], agentNeighbours) * separationForce;
 
-            velocity += CalculateAlignmentForce(agents[i], agentNeighbours) * alignmentForce;
+            calculatedSteeringForce += CalculateAlignmentForce(agents[i], agentNeighbours) * alignmentForce;
 
-            velocity += CalculateCohesionForce(agents[i], agentNeighbours) * cohesionForce;
+            calculatedSteeringForce += CalculateCohesionForce(agents[i], agentNeighbours) * cohesionForce;
 
-            agents[i].Velocity = velocity.normalized;
+            agents[i].Acceleration = calculatedSteeringForce;
         }
     }
 
@@ -93,56 +99,86 @@ public class ControlAgents : MonoBehaviour
 
     Vector2 CalculateAlignmentForce(AgentMovement currentAgent, AgentMovement[] neighbours)
     {
-        Vector2 runningTotal = new Vector2();
+        Vector2 steeringForce = new Vector2();
 
         for (int i = 0; i < neighbours.Length; i++)
         {
-            runningTotal += neighbours[i].Velocity;
+            steeringForce += neighbours[i].Velocity;
         }
 
-        Vector2 averageRunningTotal = runningTotal / neighbours.Length;
-        return averageRunningTotal.normalized;
+
+        if (neighbours.Length > 0)
+        {
+            steeringForce /= neighbours.Length;
+            steeringForce.Normalize();
+            steeringForce *= currentAgent.MaxSpeed;
+            steeringForce -= currentAgent.Velocity;
+        }
+
+        return steeringForce;
     }
 
     Vector2 CalculateCohesionForce(AgentMovement currentAgent, AgentMovement[] neighbours)
     {
-        Vector2 runningTotalPosition = new Vector2();
+        Vector2 steeringForce = new Vector2();
 
         for (int i = 0; i < neighbours.Length; i++)
         {
-            runningTotalPosition += Vector3Extension.AsVector2(neighbours[i].transform.position);
+            steeringForce += (Vector2)neighbours[i].transform.position;
         }
 
-        Vector2 AverageRunningTotalPosition = runningTotalPosition / neighbours.Length;
 
-        Vector2 velocityToAverageRunningTotalPosition = AverageRunningTotalPosition - Vector3Extension.AsVector2(currentAgent.transform.position);
+        if (neighbours.Length > 0)
+        {
+            steeringForce /= neighbours.Length;
+            steeringForce -= (Vector2)currentAgent.transform.position;
+            steeringForce.Normalize();
+            steeringForce *= currentAgent.MaxSpeed;
+            steeringForce -= currentAgent.Velocity;
+            steeringForce = Vector2.ClampMagnitude(steeringForce, maximumForce);
+        }
 
-
-        return velocityToAverageRunningTotalPosition.normalized;
+        return steeringForce;
     }
 
     Vector2 CalculateSeparationForce(AgentMovement currentAgent, AgentMovement[] neighbours)
     {
-        Vector2 runningTotal = new Vector2();
+        Vector2 steeringForce = new Vector2();
 
         for (int i = 0; i < neighbours.Length; i++)
         {
-            runningTotal += Vector3Extension.AsVector2(currentAgent.transform.position) - Vector3Extension.AsVector2(neighbours[i].transform.position);
+            steeringForce += (Vector2)currentAgent.transform.position - (Vector2)neighbours[i].transform.position;
         }
 
-        Vector2 averageRunningTotal = runningTotal / neighbours.Length;
+        if (neighbours.Length > 0)
+        {
+            steeringForce /= neighbours.Length;
+            steeringForce -= currentAgent.Velocity;
+        }
 
-        return averageRunningTotal.normalized;
+        return steeringForce;
     }
-}
 
 
-
-//Extension that allows for easier access of the X and Y of a Vector3
-public static class Vector3Extension
-{
-    public static Vector2 AsVector2(this Vector3 _v)
+    void Wrap(Transform agent)
     {
-        return new Vector2(_v.x, _v.y);
+
+        if (agent.position.x > maxCam.x)
+        {
+            agent.position = new Vector3(minCam.x, agent.position.y, agent.position.z);
+        }
+        else if (agent.position.x < minCam.x)
+        {
+            agent.position = new Vector3(maxCam.x, agent.position.y, agent.position.z);
+        }
+
+        if (agent.position.y > maxCam.y)
+        {
+            agent.position = new Vector3(agent.position.x, minCam.y, agent.position.z);
+        }
+        else if (agent.position.y < minCam.y)
+        {
+            agent.position = new Vector3(agent.position.x, maxCam.y, agent.position.z);
+        }
     }
 }

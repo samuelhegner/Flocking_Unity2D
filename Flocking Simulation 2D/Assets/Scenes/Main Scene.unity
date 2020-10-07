@@ -165,9 +165,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   alignmentForce: 0.6
-  separationForce: 1
+  separationForce: 0
   cohesionForce: 0.6
-  agentNeighbourRange: 25
+  agentNeighbourRange: 50
   agentPrefab: {fileID: 3682561734965970249, guid: 9dfc09e18f4040d4c9e9baf4fcf21bb7,
     type: 3}
   numberOfAgentsToSpawn: 200

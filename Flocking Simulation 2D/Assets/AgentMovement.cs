@@ -5,7 +5,10 @@ using UnityEngine;
 public class AgentMovement : MonoBehaviour
 {
     private Vector2 velocity;
-    [SerializeField] private float maxSpeed = 2f;
+
+    private Vector2 acceleration;
+
+    [SerializeField] private float maxSpeed = 10f;
 
 
     public Vector2 Velocity
@@ -14,15 +17,25 @@ public class AgentMovement : MonoBehaviour
         set => velocity = value;
     }
 
+    public Vector2 Acceleration
+    {
+        get => acceleration;
+        set => acceleration = value;
+    }
+
+    public float MaxSpeed
+    {
+        get => maxSpeed;
+    }
+
     void Awake()
     {
-        velocity = new Vector2();
+        velocity = Random.insideUnitCircle * maxSpeed;
     }
 
     void Update()
     {
-        Vector2 clampedVelocity = Vector2.ClampMagnitude(velocity, maxSpeed);
-
-        transform.position += new Vector3(clampedVelocity.x, clampedVelocity.y, 0);
+        transform.position += (Vector3)Vector2.ClampMagnitude(velocity, maxSpeed);
+        velocity += acceleration;
     }
 }
