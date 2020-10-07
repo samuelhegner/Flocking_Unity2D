@@ -14,6 +14,8 @@ public class ControlAgents : MonoBehaviour
 
     [SerializeField] [Range(0, 180)] private float visionRadiusAngle = 90f;
 
+    [SerializeField] bool useVisionRadius = false;
+
 
 
     [SerializeField] private float agentNeighbourRange = 10f;
@@ -57,7 +59,7 @@ public class ControlAgents : MonoBehaviour
 
         for (int i = 0; i < numberOfAgentsToSpawn; i++)
         {
-            agents.Add(Instantiate(agentPrefab, new Vector2(Random.Range(minCam.x, maxCam.x), Random.Range(minCam.y, maxCam.y)), Quaternion.identity).GetComponent<AgentMovement>());
+            agents.Add(Instantiate(agentPrefab, new Vector2(Random.Range(minCam.x, maxCam.x), Random.Range(minCam.y, maxCam.y)), Quaternion.identity, transform).GetComponent<AgentMovement>());
         }
     }
 
@@ -202,8 +204,15 @@ public class ControlAgents : MonoBehaviour
 
     bool CheckForNeighbourInFront(AgentMovement currentAgent, AgentMovement agentToCheck)
     {
-        Vector2 toAgentToCheck = agentToCheck.transform.position - currentAgent.transform.position;
+        if (useVisionRadius)
+        {
+            Vector2 toAgentToCheck = agentToCheck.transform.position - currentAgent.transform.position;
 
-        return Vector2.Angle(currentAgent.Velocity, toAgentToCheck) < visionRadiusAngle;
+            return Vector2.Angle(currentAgent.Velocity, toAgentToCheck) < visionRadiusAngle;
+        }
+        else
+        {
+            return true;
+        }
     }
 }

@@ -164,14 +164,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 852d9fad38bc1804cb8c9a603a6173f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  alignmentForce: 1
+  alignmentForce: 0.6
   separationForce: 1
-  cohesionForce: 1
+  cohesionForce: 0.8
   maximumForce: 1
+  visionRadiusAngle: 110
   agentNeighbourRange: 45
   agentPrefab: {fileID: 3682561734965970249, guid: 9dfc09e18f4040d4c9e9baf4fcf21bb7,
     type: 3}
-  numberOfAgentsToSpawn: 250
+  numberOfAgentsToSpawn: 100
   agents: []
 --- !u!1 &519420028
 GameObject:
