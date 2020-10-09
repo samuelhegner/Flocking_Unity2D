@@ -14,6 +14,7 @@ public class ControlAgentEditor : Editor
         EditorGUILayout.LabelField("Simulation Options", EditorStyles.boldLabel);
         EditorGUILayout.Space();
         controlAgents.NumberOfAgentsToSpawn = EditorGUILayout.IntSlider("Number of Agents: ", controlAgents.NumberOfAgentsToSpawn, 0, 5000);
+        controlAgents.AdjustmentMultiplier = EditorGUILayout.FloatField("Adjustment Multiplier: ", controlAgents.AdjustmentMultiplier);
         controlAgents.UseJobs = EditorGUILayout.Toggle("Use Jobs: ", controlAgents.UseJobs);
 
         EditorGUILayout.Space();
@@ -29,7 +30,7 @@ public class ControlAgentEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Agent Movement Options");
         controlAgents.AgentPerceptionRange = EditorGUILayout.Slider("Perception Range: ", controlAgents.AgentPerceptionRange, 0, 100);
-        controlAgents.AgentMaxSpeed = EditorGUILayout.Slider("Maximum Speed: ", controlAgents.AgentMaxSpeed, 0, 300);
+        controlAgents.AgentMaxSpeed = EditorGUILayout.Slider("Maximum Speed: ", controlAgents.AgentMaxSpeed, 0, 10);
         controlAgents.UseVisionRadius = EditorGUILayout.Toggle("Use Vision Radius: ", controlAgents.UseVisionRadius);
 
         if (controlAgents.UseVisionRadius)
