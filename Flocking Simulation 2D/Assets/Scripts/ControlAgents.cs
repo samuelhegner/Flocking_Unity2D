@@ -41,6 +41,9 @@ public class ControlAgents : MonoBehaviour
     Vector2 maxCam;
     Vector2 minCam;
 
+    private int numberOfNeighboursPropertyID;
+    private int numberOfHighestNeighboursPropertyID;
+
     public int NumberOfAgentsToSpawn { get => numberOfAgentsToSpawn; set => numberOfAgentsToSpawn = value; }
     public float AgentAlignmentForce { get => agentAlignmentForce; set => agentAlignmentForce = value; }
     public float AgentSeparationForce { get => agentSeparationForce; set => agentSeparationForce = value; }
@@ -57,7 +60,7 @@ public class ControlAgents : MonoBehaviour
     void Start()
     {
         Camera cam = Camera.main;
-
+        
         maxCam = cam.ScreenToWorldPoint(new Vector3(cam.pixelWidth, cam.pixelHeight, 0));
         minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));
 
@@ -80,6 +83,9 @@ public class ControlAgents : MonoBehaviour
             agents.Add(newAgentData);
         }
 
+        numberOfNeighboursPropertyID = Shader.PropertyToID("_numberOfNeighbours");
+        numberOfHighestNeighboursPropertyID = Shader.PropertyToID("_numberOfHighestNeighbours");
+        agents[0].renderer.GetPropertyBlock(materialProperty);
     }
 
 
@@ -161,10 +167,9 @@ public class ControlAgents : MonoBehaviour
                 agents[i].agentTransform.position = new Vector3(positionArray[i].x, positionArray[i].y, 0);
 
 
-                agents[i].renderer.GetPropertyBlock(materialProperty);
 
-                materialProperty.SetInt("_numberOfNeighbours", agents[i].neighbourCount);
-                materialProperty.SetInt("_numberOfHighestNeighbours", agents[i].highestNeighbourCount);
+                materialProperty.SetInt(numberOfNeighboursPropertyID, agents[i].neighbourCount);
+                materialProperty.SetInt(numberOfHighestNeighboursPropertyID, agents[i].highestNeighbourCount);
 
                 agents[i].renderer.SetPropertyBlock(materialProperty);
 
