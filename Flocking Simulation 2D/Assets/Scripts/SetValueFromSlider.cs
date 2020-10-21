@@ -6,12 +6,14 @@ using UnityEngine.UI;
 
 public class SetValueFromSlider : MonoBehaviour
 {
-    [SerializeField] private ControlAgents agents;
+    private ControlAgents agents;
 
     [SerializeField] private Slider slider;
 
     private void Start()
     {
+        agents = FindObjectOfType<ControlAgents>();
+
         slider.value = agents.NumberOfAgentsToSpawn;
     }
 

@@ -10,7 +10,7 @@ public class FpsCalculation : MonoBehaviour
     float fps;
     float ms;
 
-    float deltaTime = 0f;
+    float deltaTime = 0.0f;
 
     void Start()
     {
@@ -21,8 +21,12 @@ public class FpsCalculation : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
+
         fps = (int)(1f / Time.unscaledDeltaTime);
 
-        text.text = "FPS: " + fps.ToString() + " Ms: " + ms;
+        ms = deltaTime * 1000.0f;
+
+        text.text = "FPS: " + fps.ToString() + " Ms: " + ms.ToString("F2");
     }
 }

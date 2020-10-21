@@ -13,9 +13,8 @@ public class ControlAgentEditor : Editor
 
         EditorGUILayout.LabelField("Simulation Options", EditorStyles.boldLabel);
         EditorGUILayout.Space();
-        controlAgents.NumberOfAgentsToSpawn = EditorGUILayout.IntSlider("Number of Agents: ", controlAgents.NumberOfAgentsToSpawn, 0, 5000);
-        controlAgents.AdjustmentMultiplier = EditorGUILayout.FloatField("Adjustment Multiplier: ", controlAgents.AdjustmentMultiplier);
-        controlAgents.UseJobs = EditorGUILayout.Toggle("Use Jobs: ", controlAgents.UseJobs);
+        controlAgents.NumberOfAgentsToSpawn = EditorGUILayout.IntSlider("Number of Agents: ", Mathf.RoundToInt(controlAgents.NumberOfAgentsToSpawn), 0, 5000);
+        controlAgents.AdjustmentMultiplier = EditorGUILayout.Slider("Simulation Speed Modifier: ", controlAgents.AdjustmentMultiplier, 0, 100f);
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Agent Options", EditorStyles.boldLabel);
@@ -31,12 +30,11 @@ public class ControlAgentEditor : Editor
         EditorGUILayout.LabelField("Agent Movement Options");
         controlAgents.AgentPerceptionRange = EditorGUILayout.Slider("Perception Range: ", controlAgents.AgentPerceptionRange, 0, 100);
         controlAgents.AgentMaxSpeed = EditorGUILayout.Slider("Maximum Speed: ", controlAgents.AgentMaxSpeed, 0, 10);
-        controlAgents.UseVisionRadius = EditorGUILayout.Toggle("Use Vision Radius: ", controlAgents.UseVisionRadius);
 
-        if (controlAgents.UseVisionRadius)
-        {
-            controlAgents.VisionRadiusAngle = EditorGUILayout.Slider("Vision Angle: ", controlAgents.VisionRadiusAngle, 0, 180);
-        }
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Agent Colour Options");
+
+        controlAgents.ColourGradient = EditorGUILayout.GradientField("Agent Colour Range: ", controlAgents.ColourGradient);
     }
 }
 

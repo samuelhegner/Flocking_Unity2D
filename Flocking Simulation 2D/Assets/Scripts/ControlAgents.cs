@@ -10,41 +10,25 @@ using System.Linq;
 
 public class ControlAgents : MonoBehaviour
 {
-    [SerializeField] private int numberOfAgentsToSpawn = 200;
-
-    [SerializeField] private bool useJobs;
-
-
-
+    [SerializeField] private float numberOfAgentsToSpawn = 200;
     [SerializeField] private GameObject agentPrefab;
-
-
     [SerializeField] private float agentAlignmentForce;
     [SerializeField] private float agentSeparationForce;
     [SerializeField] private float agentCohesionForce;
-
     [SerializeField] private float agentMaxSpeed;
     [SerializeField] private float agentMaxForce;
-
     [SerializeField] bool useVisionRadius;
-
     [SerializeField] private float visionRadiusAngle;
-
     [SerializeField] private float agentPerceptionRange;
-
     [SerializeField] private float adjustmentMultiplier = 20f;
-
+    [SerializeField] private Gradient colourGradient;
+    [SerializeField] private float colourLerpSpeed = 1f;
     private List<AgentData> agents = new List<AgentData>();
-
-    private MaterialPropertyBlock materialProperty;
 
     Vector2 maxCam;
     Vector2 minCam;
 
-    private int numberOfNeighboursPropertyID;
-    private int numberOfHighestNeighboursPropertyID;
-
-    public int NumberOfAgentsToSpawn { get => numberOfAgentsToSpawn; set => numberOfAgentsToSpawn = value; }
+    public float NumberOfAgentsToSpawn { get => Mathf.RoundToInt(numberOfAgentsToSpawn); set => numberOfAgentsToSpawn = value; }
     public float AgentAlignmentForce { get => agentAlignmentForce; set => agentAlignmentForce = value; }
     public float AgentSeparationForce { get => agentSeparationForce; set => agentSeparationForce = value; }
     public float AgentCohesionForce { get => agentCohesionForce; set => agentCohesionForce = value; }
@@ -53,154 +37,146 @@ public class ControlAgents : MonoBehaviour
     public bool UseVisionRadius { get => useVisionRadius; set => useVisionRadius = value; }
     public float VisionRadiusAngle { get => visionRadiusAngle; set => visionRadiusAngle = value; }
     public float AgentPerceptionRange { get => agentPerceptionRange; set => agentPerceptionRange = value; }
-    public bool UseJobs { get => useJobs; set => useJobs = value; }
     public float AdjustmentMultiplier { get => adjustmentMultiplier; set => adjustmentMultiplier = value; }
+
+    public float ColourLerpSpeed { get => colourLerpSpeed; set => colourLerpSpeed = value; }
+
+    public Gradient ColourGradient { get => colourGradient; set => colourGradient = value; }
+
 
 
     void Start()
     {
         Camera cam = Camera.main;
-        
+
         maxCam = cam.ScreenToWorldPoint(new Vector3(cam.pixelWidth, cam.pixelHeight, 0));
         minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));
 
-        materialProperty = new MaterialPropertyBlock();
-
         for (int i = 0; i < numberOfAgentsToSpawn; i++)
         {
-            GameObject newAgent = Instantiate(agentPrefab, new Vector2(UnityEngine.Random.Range(minCam.x, maxCam.x), UnityEngine.Random.Range(minCam.y, maxCam.y)), Quaternion.identity, transform);
-
-            newAgent.name = "Agent " + i.ToString();
-
-            AgentData newAgentData = new AgentData();
-
-            newAgentData.agentTransform = newAgent.transform;
-            newAgentData.velocity = UnityEngine.Random.insideUnitCircle * agentMaxSpeed;
-            newAgentData.renderer = newAgent.GetComponent<Renderer>();
-            newAgentData.neighbourCount = 0;
-            newAgentData.highestNeighbourCount = 0;
-
-            agents.Add(newAgentData);
+            CreateNewAgent();
         }
-
-        numberOfNeighboursPropertyID = Shader.PropertyToID("_numberOfNeighbours");
-        numberOfHighestNeighboursPropertyID = Shader.PropertyToID("_numberOfHighestNeighbours");
-        agents[0].renderer.GetPropertyBlock(materialProperty);
     }
 
 
     void Update()
     {
-        if (useJobs)
+        //Create or Destroy Agents if required
+        UpdateAgentCount();
+
+        //Create Native Arrays for Jobs
+        NativeArray<float2> calculatedSteeringForceArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
+
+        NativeArray<float2> positionArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
+
+        NativeArray<float2> velocityArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
+
+        NativeArray<int> neighbourCountArray = new NativeArray<int>(agents.Count, Allocator.TempJob);
+
+        //Fill native arrays with data
+        for (int i = 0; i < agents.Count; i++)
         {
-            UpdateAgentCount();
+            calculatedSteeringForceArray[i] = 0;
+            positionArray[i] = (Vector2)agents[i].agentTransform.position;
+            velocityArray[i] = agents[i].velocity;
+            neighbourCountArray[i] = agents[i].neighbourCount;
+        }
+
+        //Create the Flocking Force Calculation Job
+        FlockingParallelJob flockingParallelJob = new FlockingParallelJob
+        {
+            calculatedSteeringForceArray = calculatedSteeringForceArray,
+            positionArray = positionArray,
+            velocityArray = velocityArray,
+            neighbourCountArray = neighbourCountArray,
+            maxForce = agentMaxForce,
+            maxSpeed = agentMaxSpeed,
+            perceptionRange = agentPerceptionRange,
+
+            alignmentForceMult = agentAlignmentForce,
+            separationForceMult = agentSeparationForce,
+            cohesionForceMult = agentCohesionForce,
+        };
+
+        //Schedules the flocking Job and wait for it to finish its calculations
+        JobHandle flockingJobHandle = flockingParallelJob.Schedule(agents.Count, 100);
+        flockingJobHandle.Complete();
+
+        //Create the Agents Movement job
+        MoveAgentsParallelJob moveAgentsParallelJob = new MoveAgentsParallelJob
+        {
+            calculatedSteeringForceArray = calculatedSteeringForceArray,
+            positionArray = positionArray,
+            velocityArray = velocityArray,
+            maxSpeed = agentMaxSpeed,
+            deltaTime = Time.deltaTime,
+            minCam = minCam,
+            maxCam = maxCam,
+            adjustmentMult = adjustmentMultiplier
+        };
+
+        //Schedule the Movement job and wait for it to complete
+        JobHandle movementJobHandle = moveAgentsParallelJob.Schedule(agents.Count, 100);
+        movementJobHandle.Complete();
+
+        //Slot the calculated information back into the agents
+        for (int i = 0; i < agents.Count; i++)
+        {
+            //Set the agents movement information
+            agents[i].velocity = new float2(velocityArray[i]);
+            agents[i].neighbourCount = neighbourCountArray[i];
+            agents[i].agentTransform.position = new Vector3(positionArray[i].x, positionArray[i].y, 0);
 
 
-            NativeArray<float2> calculatedSteeringForceArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
-
-            NativeArray<float2> positionArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
-
-            NativeArray<float2> velocityArray = new NativeArray<float2>(agents.Count, Allocator.TempJob);
-
-            NativeArray<int> neighbourCountArray = new NativeArray<int>(agents.Count, Allocator.TempJob);
-
-
-            //Fill native arrays with data
-            for (int i = 0; i < agents.Count; i++)
+            //Calculate the agents colour value
+            if (agents[i].highestNeighbourCount < agents[i].neighbourCount)
             {
-                calculatedSteeringForceArray[i] = 0;
-                positionArray[i] = (Vector2)agents[i].agentTransform.position;
-                velocityArray[i] = agents[i].velocity;
-                neighbourCountArray[i] = agents[i].neighbourCount;
+                agents[i].highestNeighbourCount = agents[i].neighbourCount;
             }
-
-            FlockingParallelJob flockingParallelJob = new FlockingParallelJob
-            {
-                calculatedSteeringForceArray = calculatedSteeringForceArray,
-                positionArray = positionArray,
-                velocityArray = velocityArray,
-                neighbourCountArray = neighbourCountArray,
-                maxForce = agentMaxForce,
-                maxSpeed = agentMaxSpeed,
-                perceptionRange = agentPerceptionRange,
-
-                alignmentForceMult = agentAlignmentForce,
-                separationForceMult = agentSeparationForce,
-                cohesionForceMult = agentCohesionForce,
-
-                deltaTime = Time.deltaTime
-            };
-
-            JobHandle flockingJobHandle = flockingParallelJob.Schedule(agents.Count, 100);
-
-            flockingJobHandle.Complete();
-
-            MoveAgentsParallelJob moveAgentsParallelJob = new MoveAgentsParallelJob
-            {
-                calculatedSteeringForceArray = calculatedSteeringForceArray,
-                positionArray = positionArray,
-                velocityArray = velocityArray,
-                maxSpeed = agentMaxSpeed,
-                deltaTime = Time.deltaTime,
-                minCam = minCam,
-                maxCam = maxCam,
-                adjustmentMult = adjustmentMultiplier
-            };
-
-            JobHandle movementJobHandle = moveAgentsParallelJob.Schedule(agents.Count, 100);
             
-            movementJobHandle.Complete();
-
-            //Shader.SetGlobalFloatArray("_numberOfHighestNeighbours", agents.);
-
-            //Shader.SetGlobalVectorArray("")
-
-            for (int i = 0; i < agents.Count; i++)
+            if (agents[i].highestNeighbourCount > agents.Count)
             {
-                agents[i].velocity = new float2(velocityArray[i]);
-                agents[i].neighbourCount = neighbourCountArray[i];
-                
-                if (agents[i].highestNeighbourCount < agents[i].neighbourCount) 
-                {
-                    agents[i].highestNeighbourCount = agents[i].neighbourCount;
-                }
-                agents[i].agentTransform.position = new Vector3(positionArray[i].x, positionArray[i].y, 0);
+                agents[i].highestNeighbourCount = Mathf.Clamp(agents.Count/8, 1, agents.Count);
+            }
+            
+            float evaluationAmount = 0;
 
-
-
-                materialProperty.SetInt(numberOfNeighboursPropertyID, agents[i].neighbourCount);
-                materialProperty.SetInt(numberOfHighestNeighboursPropertyID, agents[i].highestNeighbourCount);
-
-                agents[i].renderer.SetPropertyBlock(materialProperty);
-
+            SpriteRenderer rend = agents[i].spriteRenderer;
+            
+            if (agents[i].neighbourCount > 0)
+            {
+                evaluationAmount = (float)agents[i].neighbourCount / agents[i].highestNeighbourCount;
             }
 
-            positionArray.Dispose();
-            velocityArray.Dispose();
-            calculatedSteeringForceArray.Dispose();
-            neighbourCountArray.Dispose();
+            rend.color = Color.Lerp(rend.color, colourGradient.Evaluate(evaluationAmount), Time.deltaTime * colourLerpSpeed);
         }
-        else
+
+        //Dispose the Native Arrays
+        positionArray.Dispose();
+        velocityArray.Dispose();
+        calculatedSteeringForceArray.Dispose();
+        neighbourCountArray.Dispose();
+
+
+        // Old non Job system implementation
+        /*for (int i = 0; i < numberOfAgentsToSpawn; i++)
         {
-            // Old non Job system implementation
-            /*for (int i = 0; i < numberOfAgentsToSpawn; i++)
-            {
-                UpdateAgentSpeed(agents[i]);
-                Wrap(agents[i].transform);
+            UpdateAgentSpeed(agents[i]);
+            Wrap(agents[i].transform);
 
-                Vector2 calculatedSteeringForce = Vector2.zero;
+            Vector2 calculatedSteeringForce = Vector2.zero;
 
-                AgentMovement[] agentNeighbours = CalculateNeighbours(agents[i]);
+            AgentMovement[] agentNeighbours = CalculateNeighbours(agents[i]);
 
-                calculatedSteeringForce += CalculateSeparationForce(agents[i], agentNeighbours) * agentSeparationForce;
+            calculatedSteeringForce += CalculateSeparationForce(agents[i], agentNeighbours) * agentSeparationForce;
 
-                calculatedSteeringForce += CalculateAlignmentForce(agents[i], agentNeighbours) * agentAlignmentForce;
+            calculatedSteeringForce += CalculateAlignmentForce(agents[i], agentNeighbours) * agentAlignmentForce;
 
-                calculatedSteeringForce += CalculateCohesionForce(agents[i], agentNeighbours) * agentCohesionForce;
+            calculatedSteeringForce += CalculateCohesionForce(agents[i], agentNeighbours) * agentCohesionForce;
 
-                agents[i].Acceleration = calculatedSteeringForce;
-            }*/
-        }
+            agents[i].Acceleration = calculatedSteeringForce;
+        }*/
+
     }
 
 
@@ -338,32 +314,19 @@ public class ControlAgents : MonoBehaviour
 
     void UpdateAgentCount()
     {
-        if (agents.Count == numberOfAgentsToSpawn) return;
+        if (agents.Count == (int)numberOfAgentsToSpawn) return;
 
-        if (agents.Count < numberOfAgentsToSpawn)
+        if (agents.Count < (int)numberOfAgentsToSpawn)
         {
-            while (agents.Count < numberOfAgentsToSpawn)
+            while (agents.Count < (int)numberOfAgentsToSpawn)
             {
-                GameObject newAgent = Instantiate(agentPrefab, new Vector2(UnityEngine.Random.Range(minCam.x, maxCam.x), UnityEngine.Random.Range(minCam.y, maxCam.y)), Quaternion.identity, transform);
-
-                newAgent.name = "Agent " + agents.Count.ToString();
-
-                AgentData newAgentData = new AgentData();
-
-                newAgentData.agentTransform = newAgent.transform;
-                newAgentData.velocity = UnityEngine.Random.insideUnitCircle * agentMaxSpeed;
-                newAgentData.renderer = newAgent.GetComponent<Renderer>();
-                newAgentData.neighbourCount = 0;
-                newAgentData.highestNeighbourCount = 0;
-
-
-                agents.Add(newAgentData);
+                CreateNewAgent();
             }
 
         }
         else
         {
-            while (agents.Count > numberOfAgentsToSpawn)
+            while (agents.Count > (int)numberOfAgentsToSpawn)
             {
                 AgentData agentToRemove = agents[agents.Count - 1];
                 agents.Remove(agentToRemove);
@@ -371,6 +334,23 @@ public class ControlAgents : MonoBehaviour
             }
 
         }
+    }
+
+    void CreateNewAgent()
+    {
+        GameObject newAgent = Instantiate(agentPrefab, new Vector2(UnityEngine.Random.Range(minCam.x, maxCam.x), UnityEngine.Random.Range(minCam.y, maxCam.y)), Quaternion.identity, transform);
+
+        newAgent.name = "Agent " + agents.Count.ToString();
+
+        AgentData newAgentData = new AgentData();
+
+        newAgentData.agentTransform = newAgent.transform;
+        newAgentData.velocity = UnityEngine.Random.insideUnitCircle * agentMaxSpeed;
+        newAgentData.spriteRenderer = newAgent.GetComponent<SpriteRenderer>();
+        newAgentData.neighbourCount = 0;
+        newAgentData.highestNeighbourCount = 0;
+
+        agents.Add(newAgentData);
     }
 }
 
@@ -392,9 +372,6 @@ public struct FlockingParallelJob : IJobParallelFor
     public float alignmentForceMult;
     public float separationForceMult;
     public float cohesionForceMult;
-
-    public float deltaTime;
-
 
     public void Execute(int index)
     {
@@ -431,7 +408,7 @@ public struct FlockingParallelJob : IJobParallelFor
             }
         }
 
-        if(neighbourCount != neighbourCountArray[index])
+        if (neighbourCount != neighbourCountArray[index])
             neighbourCountArray[index] = neighbourCount;
 
         if (neighbourCount > 0)
@@ -484,7 +461,7 @@ struct MoveAgentsParallelJob : IJobParallelFor
 
     public float2 minCam;
     public float2 maxCam;
-    
+
 
     public void Execute(int index)
     {
@@ -507,10 +484,10 @@ struct MoveAgentsParallelJob : IJobParallelFor
         }
 
 
-        float2 veloctyPreClamp = (velocityArray[index] * adjustmentMult) * deltaTime;
+        float2 veloctyPreClamp = (velocityArray[index]) * (deltaTime * adjustmentMult);
         positionArray[index] += (float2)Vector2.ClampMagnitude(veloctyPreClamp, maxSpeed);
 
-        velocityArray[index] += (calculatedSteeringForceArray[index] * adjustmentMult) * deltaTime;
+        velocityArray[index] += (calculatedSteeringForceArray[index]) * (deltaTime * adjustmentMult);
     }
 }
 
@@ -519,7 +496,7 @@ class AgentData
 {
     public Transform agentTransform;
     public float2 velocity;
-    public Renderer renderer;
+    public SpriteRenderer spriteRenderer;
     public int neighbourCount;
     public int highestNeighbourCount;
 }
