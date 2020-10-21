@@ -23,6 +23,8 @@ public class ControlAgents : MonoBehaviour
     [SerializeField] private float adjustmentMultiplier = 20f;
     [SerializeField] private Gradient colourGradient;
     [SerializeField] private float colourLerpSpeed = 1f;
+    [SerializeField] private float colourMaxNeighbours = 100f;
+
     private List<AgentData> agents = new List<AgentData>();
 
     Vector2 maxCam;
@@ -40,6 +42,8 @@ public class ControlAgents : MonoBehaviour
     public float AdjustmentMultiplier { get => adjustmentMultiplier; set => adjustmentMultiplier = value; }
 
     public float ColourLerpSpeed { get => colourLerpSpeed; set => colourLerpSpeed = value; }
+    public float ColourMaxNeighbours { get => colourMaxNeighbours; set => colourMaxNeighbours = value; }
+
 
     public Gradient ColourGradient { get => colourGradient; set => colourGradient = value; }
 
@@ -129,24 +133,16 @@ public class ControlAgents : MonoBehaviour
 
 
             //Calculate the agents colour value
-            if (agents[i].highestNeighbourCount < agents[i].neighbourCount)
-            {
-                agents[i].highestNeighbourCount = agents[i].neighbourCount;
-            }
-            
-            if (agents[i].highestNeighbourCount > agents.Count)
-            {
-                agents[i].highestNeighbourCount = Mathf.Clamp(agents.Count/8, 1, agents.Count);
-            }
-            
             float evaluationAmount = 0;
 
             SpriteRenderer rend = agents[i].spriteRenderer;
             
             if (agents[i].neighbourCount > 0)
             {
-                evaluationAmount = (float)agents[i].neighbourCount / agents[i].highestNeighbourCount;
+                evaluationAmount = (float)agents[i].neighbourCount / colourMaxNeighbours;
             }
+
+            evaluationAmount = Mathf.Clamp(evaluationAmount, 0, 1);
 
             rend.color = Color.Lerp(rend.color, colourGradient.Evaluate(evaluationAmount), Time.deltaTime * colourLerpSpeed);
         }
@@ -348,8 +344,6 @@ public class ControlAgents : MonoBehaviour
         newAgentData.velocity = UnityEngine.Random.insideUnitCircle * agentMaxSpeed;
         newAgentData.spriteRenderer = newAgent.GetComponent<SpriteRenderer>();
         newAgentData.neighbourCount = 0;
-        newAgentData.highestNeighbourCount = 0;
-
         agents.Add(newAgentData);
     }
 }
@@ -498,5 +492,4 @@ class AgentData
     public float2 velocity;
     public SpriteRenderer spriteRenderer;
     public int neighbourCount;
-    public int highestNeighbourCount;
 }

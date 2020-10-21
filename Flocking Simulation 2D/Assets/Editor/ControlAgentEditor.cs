@@ -29,12 +29,13 @@ public class ControlAgentEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Agent Movement Options");
         controlAgents.AgentPerceptionRange = EditorGUILayout.Slider("Perception Range: ", controlAgents.AgentPerceptionRange, 0, 100);
-        controlAgents.AgentMaxSpeed = EditorGUILayout.Slider("Maximum Speed: ", controlAgents.AgentMaxSpeed, 0, 10);
+        controlAgents.AgentMaxSpeed = EditorGUILayout.Slider("Maximum Speed: ", controlAgents.AgentMaxSpeed, 1, 10);
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Agent Colour Options");
-
         controlAgents.ColourGradient = EditorGUILayout.GradientField("Agent Colour Range: ", controlAgents.ColourGradient);
+        controlAgents.ColourLerpSpeed = EditorGUILayout.Slider("Colour Lerp Speed: ", controlAgents.ColourLerpSpeed, 0, 10);
+        controlAgents.ColourMaxNeighbours = EditorGUILayout.Slider("Color Maximum Neighbours: ", controlAgents.ColourMaxNeighbours, 0, 500);
     }
 }
 
