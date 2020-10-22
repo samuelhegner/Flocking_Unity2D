@@ -36,6 +36,10 @@ public class ControlAgentEditor : Editor
         controlAgents.ColourGradient = EditorGUILayout.GradientField("Agent Colour Range: ", controlAgents.ColourGradient);
         controlAgents.ColourLerpSpeed = EditorGUILayout.Slider("Colour Lerp Speed: ", controlAgents.ColourLerpSpeed, 0, 10);
         controlAgents.ColourMaxNeighbours = EditorGUILayout.Slider("Color Maximum Neighbours: ", controlAgents.ColourMaxNeighbours, 0, 500);
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Mouse Fleeing Options");
+        controlAgents.FleeFromMouse = EditorGUILayout.Toggle("Flee from Mouse: ", controlAgents.FleeFromMouse);
     }
 }
 

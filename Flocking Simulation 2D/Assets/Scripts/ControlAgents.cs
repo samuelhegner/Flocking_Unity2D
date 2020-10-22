@@ -27,6 +27,10 @@ public class ControlAgents : MonoBehaviour
 
     private List<AgentData> agents = new List<AgentData>();
 
+    private FollowMouse mousePosition;
+
+    public bool fleeFromMouse;
+
     Vector2 maxCam;
     Vector2 minCam;
 
@@ -44,6 +48,8 @@ public class ControlAgents : MonoBehaviour
     public float ColourLerpSpeed { get => colourLerpSpeed; set => colourLerpSpeed = value; }
     public float ColourMaxNeighbours { get => colourMaxNeighbours; set => colourMaxNeighbours = value; }
 
+    public bool FleeFromMouse { get => fleeFromMouse; set => fleeFromMouse = value; }
+
 
     public Gradient ColourGradient { get => colourGradient; set => colourGradient = value; }
 
@@ -52,6 +58,8 @@ public class ControlAgents : MonoBehaviour
     void Start()
     {
         Camera cam = Camera.main;
+
+        mousePosition = FindObjectOfType<FollowMouse>();
 
         maxCam = cam.ScreenToWorldPoint(new Vector3(cam.pixelWidth, cam.pixelHeight, 0));
         minCam = cam.ScreenToWorldPoint(new Vector3(0, 0, 0));
@@ -100,6 +108,9 @@ public class ControlAgents : MonoBehaviour
             alignmentForceMult = agentAlignmentForce,
             separationForceMult = agentSeparationForce,
             cohesionForceMult = agentCohesionForce,
+
+            mousePosition = (Vector2)mousePosition.transform.position,
+            fleeFromMouse = fleeFromMouse
         };
 
         //Schedules the flocking Job and wait for it to finish its calculations
@@ -136,7 +147,7 @@ public class ControlAgents : MonoBehaviour
             float evaluationAmount = 0;
 
             SpriteRenderer rend = agents[i].spriteRenderer;
-            
+
             if (agents[i].neighbourCount > 0)
             {
                 evaluationAmount = (float)agents[i].neighbourCount / colourMaxNeighbours;
@@ -367,6 +378,11 @@ public struct FlockingParallelJob : IJobParallelFor
     public float separationForceMult;
     public float cohesionForceMult;
 
+    public float2 mousePosition;
+
+    public bool fleeFromMouse;
+
+
     public void Execute(int index)
     {
         float2 tempForce = new float2();
@@ -374,66 +390,88 @@ public struct FlockingParallelJob : IJobParallelFor
         float2 alignmentForce = new float2();
         float2 separationForce = new float2();
         float2 cohesionForce = new float2();
+        float2 fleeForce = new float2();
 
         int neighbourCount = 0;
 
-        //check distance
-        for (int i = 0; i < positionArray.Length; i++)
-        {
-            float distance = math.distance(positionArray[index], positionArray[i]);
+        float distanceToMouse = math.distance(positionArray[index], mousePosition);
 
-            if (index != i && distance < perceptionRange)
+        //check distance
+        if (fleeFromMouse && distanceToMouse < perceptionRange * 2f)
+        {
+            //flee from mouse
+            float2 vectorToMouse = positionArray[index] - mousePosition;
+            vectorToMouse /= distanceToMouse;
+
+            fleeForce += vectorToMouse;
+
+            fleeForce = math.normalize(fleeForce);
+            fleeForce *= (maxSpeed * 2f);
+            fleeForce = Vector2.ClampMagnitude(fleeForce, maxForce);
+
+            tempForce += fleeForce;
+
+        }
+        else
+        {
+            for (int i = 0; i < positionArray.Length; i++)
+            {
+                float distanceToAgent = math.distance(positionArray[index], positionArray[i]);
+
+                if (index != i && distanceToAgent < perceptionRange)
+                {
+                    //alignment
+                    alignmentForce += velocityArray[i];
+
+                    //cohesion
+                    cohesionForce += positionArray[i];
+
+                    //separation
+                    float2 vectorToCurrentAgent = positionArray[index] - positionArray[i];
+                    vectorToCurrentAgent /= distanceToAgent;
+
+                    separationForce += vectorToCurrentAgent;
+
+
+                    //increase Neighbour count
+                    neighbourCount++;
+                }
+            }
+
+            if (neighbourCount != neighbourCountArray[index])
+                neighbourCountArray[index] = neighbourCount;
+
+            if (neighbourCount > 0)
             {
                 //alignment
-                alignmentForce += velocityArray[i];
+                alignmentForce /= neighbourCount;
+                alignmentForce = math.normalize(alignmentForce);
+                alignmentForce *= maxSpeed;
+                alignmentForce -= velocityArray[index];
+                alignmentForce = Vector2.ClampMagnitude(alignmentForce, maxForce);
 
                 //cohesion
-                cohesionForce += positionArray[i];
+                cohesionForce /= neighbourCount;
+                cohesionForce -= positionArray[index];
+                cohesionForce = math.normalize(cohesionForce);
+                cohesionForce *= maxSpeed;
+                cohesionForce -= velocityArray[index];
+                cohesionForce = Vector2.ClampMagnitude(cohesionForce, maxForce);
 
                 //separation
-                float2 vectorToCurrentAgent = positionArray[index] - positionArray[i];
-                vectorToCurrentAgent /= distance;
-
-                separationForce += vectorToCurrentAgent;
-
-
-                //increase Neighbour count
-                neighbourCount++;
+                separationForce /= neighbourCount;
+                separationForce = math.normalize(separationForce);
+                separationForce *= maxSpeed;
+                separationForce -= velocityArray[index];
+                separationForce = Vector2.ClampMagnitude(separationForce, maxForce);
             }
+
+            //add values and multiply by editable values
+
+            tempForce += alignmentForce * alignmentForceMult;
+            tempForce += cohesionForce * cohesionForceMult;
+            tempForce += separationForce * separationForceMult;
         }
-
-        if (neighbourCount != neighbourCountArray[index])
-            neighbourCountArray[index] = neighbourCount;
-
-        if (neighbourCount > 0)
-        {
-            //alignment
-            alignmentForce /= neighbourCount;
-            alignmentForce = math.normalize(alignmentForce);
-            alignmentForce *= maxSpeed;
-            alignmentForce -= velocityArray[index];
-            alignmentForce = Vector2.ClampMagnitude(alignmentForce, maxForce);
-
-            //cohesion
-            cohesionForce /= neighbourCount;
-            cohesionForce -= positionArray[index];
-            cohesionForce = math.normalize(cohesionForce);
-            cohesionForce *= maxSpeed;
-            cohesionForce -= velocityArray[index];
-            cohesionForce = Vector2.ClampMagnitude(cohesionForce, maxForce);
-
-            //separation
-            separationForce /= neighbourCount;
-            separationForce = math.normalize(separationForce);
-            separationForce *= maxSpeed;
-            separationForce -= velocityArray[index];
-            separationForce = Vector2.ClampMagnitude(separationForce, maxForce);
-        }
-
-        //add values and multiply by editable values
-        tempForce += alignmentForce * alignmentForceMult;
-        tempForce += cohesionForce * cohesionForceMult;
-        tempForce += separationForce * separationForceMult;
 
         calculatedSteeringForceArray[index] = tempForce;
     }
