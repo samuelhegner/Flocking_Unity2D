@@ -385,12 +385,12 @@ public struct FlockingParallelJob : IJobParallelFor
 
     public void Execute(int index)
     {
-        float2 tempForce = new float2();
+        float2 tempForce = float2.zero;
 
-        float2 alignmentForce = new float2();
-        float2 separationForce = new float2();
-        float2 cohesionForce = new float2();
-        float2 fleeForce = new float2();
+        float2 alignmentForce = float2.zero;
+        float2 separationForce = float2.zero;
+        float2 cohesionForce = float2.zero;
+        float2 fleeForce = float2.zero;
 
         int neighbourCount = 0;
 
@@ -428,6 +428,8 @@ public struct FlockingParallelJob : IJobParallelFor
 
                     //separation
                     float2 vectorToCurrentAgent = positionArray[index] - positionArray[i];
+
+                    
                     vectorToCurrentAgent /= distanceToAgent;
 
                     separationForce += vectorToCurrentAgent;
@@ -445,7 +447,7 @@ public struct FlockingParallelJob : IJobParallelFor
             {
                 //alignment
                 alignmentForce /= neighbourCount;
-                alignmentForce = math.normalize(alignmentForce);
+                alignmentForce = math.normalizesafe(alignmentForce);
                 alignmentForce *= maxSpeed;
                 alignmentForce -= velocityArray[index];
                 alignmentForce = Vector2.ClampMagnitude(alignmentForce, maxForce);
@@ -453,14 +455,14 @@ public struct FlockingParallelJob : IJobParallelFor
                 //cohesion
                 cohesionForce /= neighbourCount;
                 cohesionForce -= positionArray[index];
-                cohesionForce = math.normalize(cohesionForce);
+                cohesionForce = math.normalizesafe(cohesionForce);
                 cohesionForce *= maxSpeed;
                 cohesionForce -= velocityArray[index];
                 cohesionForce = Vector2.ClampMagnitude(cohesionForce, maxForce);
 
                 //separation
                 separationForce /= neighbourCount;
-                separationForce = math.normalize(separationForce);
+                separationForce = math.normalizesafe(separationForce);
                 separationForce *= maxSpeed;
                 separationForce -= velocityArray[index];
                 separationForce = Vector2.ClampMagnitude(separationForce, maxForce);

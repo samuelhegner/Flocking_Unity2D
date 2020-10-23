@@ -10,8 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3682561734965970242}
   - component: {fileID: 3682561734965970245}
-  - component: {fileID: -6226861702639043338}
-  - component: {fileID: 5374028312334102668}
   m_Layer: 0
   m_Name: Reworked Agent
   m_TagString: Untagged
@@ -83,60 +81,3 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &-6226861702639043338
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3682561734965970249}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c427a942cfe25df40b4ef3eb4d559b87, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  movement: {fileID: 5374028312334102668}
-  spriteRenderer: {fileID: 3682561734965970245}
-  colourGradient:
-    serializedVersion: 2
-    key0: {r: 1, g: 0.253908, b: 0, a: 0.5882353}
-    key1: {r: 0, g: 1, b: 0.7410011, a: 1}
-    key2: {r: 0.6930852, g: 0, b: 1, a: 1}
-    key3: {r: 0.13272941, g: 1, b: 0, a: 0}
-    key4: {r: 0, g: 1, b: 0.96636033, a: 0}
-    key5: {r: 0, g: 0.008930683, b: 1, a: 0}
-    key6: {r: 0.69838, g: 0, b: 1, a: 0}
-    key7: {r: 1, g: 0, b: 0.5471425, a: 0}
-    ctime0: 0
-    ctime1: 31997
-    ctime2: 65535
-    ctime3: 25443
-    ctime4: 34502
-    ctime5: 46260
-    ctime6: 56283
-    ctime7: 61873
-    atime0: 0
-    atime1: 16384
-    atime2: 65535
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_NumColorKeys: 3
-    m_NumAlphaKeys: 3
-  colourLerpSpeed: 10
---- !u!114 &5374028312334102668
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3682561734965970249}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 09233252979b1b84cbbb776629c5cdea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxSpeed: 5
