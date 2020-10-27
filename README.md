@@ -10,7 +10,7 @@ A Windows build of the project is available here: https://drive.google.com/drive
 
 ![Alt Text](Gifs/Flocking5000Boids.gif)
 
-###Changing Simulation Settings
+### Changing Simulation Settings
 The Ui allows for easy alteration of the Simulation Parameters. 
 
 The first set of settings allows you to change the number of boid being simulated and the overall project speed.
