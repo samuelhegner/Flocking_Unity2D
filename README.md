@@ -8,10 +8,12 @@ Feel free to fork this repo if you want to play around with the project. The pro
 ## Build of Project
 A Windows build of the project is available here: https://drive.google.com/drive/folders/1KrUVjF-6JzGsgztfXrJIKfSkMdGKRFr1?usp=sharing
 
-![Alt Text](Gifs/Flocking5000Boids.gif)
+![Alt Text](Images/Flocking5000Boids.gif)
 
 ### Changing Simulation Settings
 The Ui allows for easy alteration of the Simulation Parameters. 
+
+![Alt Text](Images/SimulationSettings.png)
 
 The first set of settings allows you to change the number of boid being simulated and the overall project speed.
 
